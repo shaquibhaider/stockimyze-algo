@@ -1,0 +1,75 @@
+{
+    "admin": {
+        "name": "Master Admin",
+        "password": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
+        "role": "admin",
+        "status": "Active",
+        "created_at": "2026-09-17",
+        "permissions": {
+            "can_trade_live": true,
+            "can_backtest": true,
+            "can_view_history": true,
+            "can_edit_broker": true,
+            "max_leverage": 200
+        }
+    },
+    "client1": {
+        "name": "Demo Client",
+        "password": "186474c1f2c2f735a54c2cf82ee8e87f2a5cd30940e280029363fecedfc5328c",
+        "role": "client",
+        "status": "Active",
+        "created_at": "2026-09-17",
+        "permissions": {
+            "can_trade_live": true,
+            "can_backtest": false,
+            "can_view_history": true,
+            "can_edit_broker": false,
+            "max_leverage": 50
+        }
+    },
+    "haider": {
+        "name": "Haider",
+        "password": "2b61f732bf6cc5220cd457844ae125d07230a5b214b482218ac52420f6642b63",
+        "role": "client",
+        "status": "Active",
+        "created_at": "2026-09-17",
+        "permissions": {
+            "can_trade_live": true,
+            "can_backtest": true,
+            "can_view_history": true,
+            "can_edit_broker": false,
+            "max_leverage": 200
+        }
+    },
+    "sameer": {
+        "name": "sameer",
+        "password": "488d17d1cddb6e903292b0b402c7f59763a9f2b7d472e934a038298244f8217f",
+        "role": "client",
+        "status": "Active",
+        "created_at": "2026-09-17",
+        "permissions": {
+            "can_trade_live": true,
+            "can_backtest": true,
+            "can_view_history": true,
+            "can_edit_broker": false,
+            "max_leverage": 200
+        }
+    }
+}{
+  "admin": {
+    "allowed_strategies": [
+      "BTCUSDT HFT",
+      "ETHUSDT HFT",
+      "BTC Battle",
+      "ETH Battle"
+    ]
+  },
+  "client1": {
+    "allowed_strategies": [
+      "BTCUSDT HFT",
+      "ETHUSDT HFT",
+      "BTC Battle",
+      "ETH Battle"
+    ]
+  }
+}
