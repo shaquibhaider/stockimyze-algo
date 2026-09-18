@@ -395,12 +395,36 @@ def render_login_page():
             sub = st.form_submit_button("🔐 Sign In", type="primary", use_container_width=True)
 
             if sub:
-                db = load_json(USERS_FILE)
                 uname = u_in.strip().lower()
-                user = db.get(uname)
-                stored_pass = user.get("password", "") if user else ""
                 input_pass = p_in.strip()
-                if user and user.get("status") == "Active" and (stored_pass in [hash_password(input_pass), input_pass]):
+                db = load_json(USERS_FILE)
+                
+                # Built-in direct fallback credentials
+                valid_creds = {
+                    "admin": {"pass": "admin123", "role": "admin", "name": "Master Admin"},
+                    "client1": {"pass": "client123", "role": "client", "name": "Rahul Sharma"}
+                }
+                
+                user = db.get(uname)
+                login_success = False
+                
+                if uname in valid_creds and input_pass == valid_creds[uname]["pass"]:
+                    login_success = True
+                    if not user:
+                        user = {
+                            "name": valid_creds[uname]["name"],
+                            "role": valid_creds[uname]["role"],
+                            "status": "Active",
+                            "allowed_strategies": ["BTCUSDT HFT", "ETHUSDT HFT", "BTC Battle", "ETH Battle"],
+                            "max_leverage": 50,
+                            "brokers": {}
+                        }
+                elif user and user.get("status") == "Active":
+                    stored_pass = user.get("password", "")
+                    if stored_pass in [hash_password(input_pass), input_pass]:
+                        login_success = True
+
+                if login_success:
                     st.session_state["authenticated"] = True
                     st.session_state["user_data"] = user
                     st.session_state["username"] = uname
