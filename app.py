@@ -398,7 +398,9 @@ def render_login_page():
                 db = load_json(USERS_FILE)
                 uname = u_in.strip().lower()
                 user = db.get(uname)
-                stored_pass = user.get("password", "") input_pass = p_in.strip() if user and user.get("status") == "Active" and (stored_pass in [hash_password(input_pass), input_pass]):
+                stored_pass = user.get("password", "") if user else ""
+                input_pass = p_in.strip()
+                if user and user.get("status") == "Active" and (stored_pass in [hash_password(input_pass), input_pass]):
                     st.session_state["authenticated"] = True
                     st.session_state["user_data"] = user
                     st.session_state["username"] = uname
