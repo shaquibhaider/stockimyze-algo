@@ -5,7 +5,7 @@ import json
 import os
 import time
 import hashlib
-from datetime import datetime, timedelta
+from datetime import datetime
 
 # Page Configuration - Institutional Theme
 st.set_page_config(
@@ -15,37 +15,84 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# FIXED INSTITUTIONAL UI CSS
+# FIXED INSTITUTIONAL UI CSS (LOCKED THEME)
 st.markdown("""
 <style>
+    /* Main Background & Fonts */
     .stApp { background-color: #f8fafc; }
-    .header-box { display: flex; align-items: center; justify-content: space-between; background: #ffffff; padding: 10px 18px; border-radius: 12px; border: 1px solid #e2e8f0; }
-    .sidebar-category { font-size: 11px; font-weight: 800; color: #94a3b8; letter-spacing: 0.8px; margin-top: 18px; margin-bottom: 8px; padding-left: 6px; text-transform: uppercase; }
-    div[data-testid="stSidebar"] div.stButton > button { text-align: left; border-radius: 8px; padding: 8px 14px; font-weight: 500; font-size: 13px; margin-bottom: 4px; border: 1px solid transparent; }
-    div[data-testid="stSidebar"] div.stButton > button:hover { border: 1px solid #cbd5e1; background-color: #f1f5f9; color: #0f172a; }
-    div[data-testid="stMetric"] { background-color: #ffffff; padding: 14px 18px; border-radius: 10px; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
-    div[data-testid="stExpander"] { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; }
     
-    /* Broker Card Styles */
-    .broker-card {
+    /* Top Header Bar */
+    .header-box {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
         background: #ffffff;
+        padding: 10px 18px;
+        border-radius: 12px;
         border: 1px solid #e2e8f0;
-        border-radius: 16px;
-        padding: 16px;
-        margin-bottom: 16px;
         box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        margin-bottom: 20px;
     }
-    .broker-badge-stocks { background: #f1f5f9; color: #475569; font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 600; }
-    .broker-badge-crypto { background: #fef3c7; color: #b45309; font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 600; }
-    .status-pill-disc { background: #fee2e2; color: #ef4444; font-size: 11px; padding: 3px 8px; border-radius: 10px; font-weight: 700; }
-    .status-pill-conn { background: #dcfce7; color: #15803d; font-size: 11px; padding: 3px 8px; border-radius: 10px; font-weight: 700; }
-    .avatar-circle { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #ffffff; font-size: 14px; }
+    .badge-market {
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    /* Sidebar Headers & Categories */
+    .sidebar-category {
+        font-size: 11px;
+        font-weight: 800;
+        color: #94a3b8;
+        letter-spacing: 0.8px;
+        margin-top: 18px;
+        margin-bottom: 8px;
+        padding-left: 6px;
+        text-transform: uppercase;
+    }
+    
+    /* Sidebar Buttons - Professional Flat Style */
+    div[data-testid="stSidebar"] div.stButton > button {
+        text-align: left;
+        border-radius: 8px;
+        padding: 8px 14px;
+        font-weight: 500;
+        font-size: 13px;
+        margin-bottom: 4px;
+        border: 1px solid transparent;
+        transition: all 0.2s ease;
+    }
+    div[data-testid="stSidebar"] div.stButton > button:hover {
+        border: 1px solid #cbd5e1;
+        background-color: #f1f5f9;
+        color: #0f172a;
+    }
+    
+    /* Metrics Box */
+    div[data-testid="stMetric"] {
+        background-color: #ffffff;
+        padding: 14px 18px;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+    
+    /* Clean Expanders & Cards */
+    div[data-testid="stExpander"] {
+        background-color: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+    }
 </style>
 """, unsafe_allow_html=True)
 
 USERS_FILE = "users_db.json"
 AUDIT_FILE = "audit_log.json"
-BROKERS_FILE = "brokers_data.json"
 
 def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
@@ -87,25 +134,25 @@ def init_db():
                 "role": "admin",
                 "status": "Active",
                 "password": "admin123",
-                "allowed_strategies": ["BTC Battle", "ETH Battle", "BTCUSDT HFT", "ETHUSDT HFT"],
+                "allowed_strategies": ["BTCUSDT HFT", "ETHUSDT HFT", "BTC Battle", "ETH Battle"],
                 "max_leverage": 200,
-                "brokers": {}
+                "brokers": {"cosmic": {"connected": True}}
             },
             "client1": {
                 "name": "Rahul Sharma",
                 "role": "client",
                 "status": "Active",
                 "password": "client123",
-                "allowed_strategies": ["BTC Battle", "ETH Battle"],
+                "allowed_strategies": ["BTCUSDT HFT", "ETHUSDT HFT", "BTC Battle", "ETH Battle"],
                 "max_leverage": 50,
-                "brokers": {}
+                "brokers": {"cosmic": {"connected": False}}
             }
         }
         save_json(USERS_FILE, users)
 
 init_db()
 
-# State Management
+# Session State Tracking
 if "authenticated" not in st.session_state:
     st.session_state["authenticated"] = False
 if "username" not in st.session_state:
@@ -115,40 +162,98 @@ if "user_data" not in st.session_state:
 if "selected_page" not in st.session_state:
     st.session_state["selected_page"] = "Dashboard"
 
-# --- TOP INSTITUTIONAL TICKER BAR ---
+# --- TOP ORIGINAL LIVE TICKER BAR ---
+# Function to get live market prices safely
+def get_live_market_data():
+    prices = {
+        "nifty": "25,390.40",
+        "banknifty": "52,120.15",
+        "sensex": "83,184.80",
+        "btc": "81,069.99",
+        "eth": "2,632.41",
+        "gold": "2,624.50"
+    }
+    try:
+        r_btc = requests.get("https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT", timeout=1).json()
+        if "price" in r_btc:
+            prices["btc"] = f"{float(r_btc['price']):,.2f}"
+    except Exception:
+        pass
+    try:
+        r_eth = requests.get("https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT", timeout=1).json()
+        if "price" in r_eth:
+            prices["eth"] = f"{float(r_eth['price']):,.2f}"
+    except Exception:
+        pass
+    return prices
+
+# --- TWO-LINE DEDICATED LIVE TICKER BAR ---
 def render_top_bar():
-    c1, c2, c3, c4 = st.columns([2.2, 2.2, 2.5, 2.1])
+    m = get_live_market_data()
+    u_name = st.session_state.get('user_data', {}).get('name', 'Master Admin')
+    u_role = st.session_state.get('user_data', {}).get('role', 'admin').title()
+
+    # LINE 1: INDIAN MARKET (NIFTY, BANK NIFTY, SENSEX) + USER PROFILE
+    c1, c2, c3, c4 = st.columns([2.5, 2.5, 2.5, 2.5])
     with c1:
-        st.markdown("""
-        <div style="background:#f0f9ff; padding:8px 12px; border-radius:8px; border:1px solid #bae6fd;">
+        st.markdown(f"""
+        <div style="background:#f0f9ff; padding:7px 12px; border-radius:8px; border:1px solid #bae6fd;">
             <span style="color:#0284c7; font-size:10px; font-weight:800;">INDIAN</span> 
-            &nbsp;<b>IN NIFTY</b> <span style="color:#0f172a; font-weight:600;">25,390.40</span>
+            &nbsp;<b>IN NIFTY</b> <span style="color:#0f172a; font-weight:600;">{m['nifty']}</span>
         </div>
         """, unsafe_allow_html=True)
     with c2:
-        st.markdown("""
-        <div style="background:#faf5ff; padding:8px 12px; border-radius:8px; border:1px solid #e9d5ff;">
+        st.markdown(f"""
+        <div style="background:#faf5ff; padding:7px 12px; border-radius:8px; border:1px solid #e9d5ff;">
             <span style="color:#9333ea; font-size:10px; font-weight:800;">🏦 BANK NIFTY</span> 
-            &nbsp;<b>52,120.15</b> &nbsp;<span style="color:#16a34a; font-size:11px;">● NSE Live</span>
+            &nbsp;<b>{m['banknifty']}</b> &nbsp;<span style="color:#16a34a; font-size:11px;">● NSE Live</span>
         </div>
         """, unsafe_allow_html=True)
     with c3:
-        st.markdown("""
-        <div style="background:#fffbeb; padding:8px 12px; border-radius:8px; border:1px solid #fde68a;">
-            <span style="color:#d97706; font-size:10px; font-weight:800;">GLOBAL</span> 
-            &nbsp;<b>₿ BTC:</b> $81,069.99 &nbsp;|&nbsp; <b>Ξ ETH:</b> $2,632.41
+        st.markdown(f"""
+        <div style="background:#f1f5f9; padding:7px 12px; border-radius:8px; border:1px solid #cbd5e1;">
+            <span style="color:#334155; font-size:10px; font-weight:800;">BSE</span> 
+            &nbsp;<b>SENSEX</b> <span style="color:#0f172a; font-weight:600;">{m['sensex']}</span>
         </div>
         """, unsafe_allow_html=True)
     with c4:
-        u_name = st.session_state.get('user_data', {}).get('name', 'Master Admin')
-        u_role = st.session_state.get('user_data', {}).get('role', 'admin').title()
         st.markdown(f"""
-        <div style="background:#ffffff; padding:8px 12px; border-radius:8px; border:1px solid #e2e8f0; text-align:right;">
+        <div style="background:#ffffff; padding:7px 12px; border-radius:8px; border:1px solid #e2e8f0; text-align:right;">
             👤 <b>{u_name}</b> <span style="font-size:12px; color:#64748b;">({u_role})</span>
         </div>
         """, unsafe_allow_html=True)
-    st.markdown("<hr style='margin-top:10px; margin-bottom:18px; border:none; border-top:1px solid #e2e8f0;'>", unsafe_allow_html=True)
 
+    # LINE 2: CRYPTO & COMMODITIES (BTC, ETH, GOLD) + SYSTEM STATUS
+    g1, g2, g3, g4 = st.columns([2.5, 2.5, 2.5, 2.5])
+    with g1:
+        st.markdown(f"""
+        <div style="background:#fffbeb; padding:7px 12px; border-radius:8px; border:1px solid #fde68a; margin-top:6px;">
+            <span style="color:#d97706; font-size:10px; font-weight:800;">CRYPTO</span> 
+            &nbsp;<b>₿ BTC/USDT</b> <span style="color:#0f172a; font-weight:600;">${m['btc']}</span>
+        </div>
+        """, unsafe_allow_html=True)
+    with g2:
+        st.markdown(f"""
+        <div style="background:#ecfdf5; padding:7px 12px; border-radius:8px; border:1px solid #a7f3d0; margin-top:6px;">
+            <span style="color:#059669; font-size:10px; font-weight:800;">CRYPTO</span> 
+            &nbsp;<b>Ξ ETH/USDT</b> <span style="color:#0f172a; font-weight:600;">${m['eth']}</span>
+        </div>
+        """, unsafe_allow_html=True)
+    with g3:
+        st.markdown(f"""
+        <div style="background:#fefce8; padding:7px 12px; border-radius:8px; border:1px solid #fef08a; margin-top:6px;">
+            <span style="color:#ca8a04; font-size:10px; font-weight:800;">COMMODITY</span> 
+            &nbsp;<b>🟡 GOLD (XAU)</b> <span style="color:#0f172a; font-weight:600;">${m['gold']}</span>
+        </div>
+        """, unsafe_allow_html=True)
+    with g4:
+        st.markdown("""
+        <div style="background:#f8fafc; padding:7px 12px; border-radius:8px; border:1px solid #e2e8f0; margin-top:6px; text-align:right;">
+            <span style="color:#16a34a; font-size:11px; font-weight:700;">● Algo Engines Synchronized</span>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("<hr style='margin-top:12px; margin-bottom:18px; border:none; border-top:1px solid #e2e8f0;'>", unsafe_allow_html=True)
 # --- LOGIN SCREEN ---
 def render_login():
     st.markdown("<br><br>", unsafe_allow_html=True)
@@ -163,7 +268,7 @@ def render_login():
         """, unsafe_allow_html=True)
         st.write("")
         with st.form("form_login"):
-            u_in = st.text_input("Username / Client ID", placeholder="admin, client1, sameer").strip().lower()
+            u_in = st.text_input("Username / Client ID", placeholder="admin or client1").strip().lower()
             p_in = st.text_input("Password", type="password")
             btn = st.form_submit_button("🔐 Sign In", type="primary", use_container_width=True)
             if btn:
@@ -196,12 +301,13 @@ def render_login():
                     st.session_state["authenticated"] = True
                     st.session_state["username"] = u_in
                     st.session_state["user_data"] = user
-                    st.session_state["selected_page"] = "Dashboard"
+                    st.session_state["selected_page"] = "Admin_Users" if user.get("role") == "admin" else "Dashboard"
                     st.rerun()
                 else:
                     st.error("Invalid credentials or account suspended.")
+        st.caption("Default Admin: `admin` / `admin123` • Client: `client1` / `client123`")
 
-# --- DASHBOARD VIEW ---
+# --- ORIGINAL VIEW: TRADING DASHBOARD ---
 def render_dashboard():
     st.subheader("Trading & Execution Overview")
     u_data = st.session_state.get("user_data", {})
@@ -212,7 +318,7 @@ def render_dashboard():
     col3.metric("Max Allowed Leverage", f"{u_data.get('max_leverage', 200)}x")
     col4.metric("Account Status", u_data.get("status", "Active"))
     
-    st.markdown("### Algorithmic Battle Bots Overview")
+    st.markdown("### Active Algorithmic Engines")
     t1, t2 = st.tabs(["🚀 BTC Battle (400 Pts Target)", "⚡ ETH Battle (10 Pts Target)"])
     
     with t1:
@@ -220,211 +326,20 @@ def render_dashboard():
         st.write("**Target:** 400 Points | **Stoploss:** 200 Points")
         c1, c2 = st.columns(2)
         with c1:
-            st.toggle("Auto-Pilot Execution (BTC)", value=True, key="btc_bot_toggle_dash")
+            st.toggle("Auto-Pilot Execution (BTC)", value=True, key="btc_bot_toggle")
         with c2:
-            st.info("🟢 Running: Signal listening on Binance/Cosmic/Shark Stream")
+            st.info("🟢 Running: Signal listening on Binance/Cosmic Stream")
             
     with t2:
         st.write("**Strategy:** ETHUSDT Scalp Micro-Wave")
         st.write("**Target:** 10 Points | **Stoploss:** 6 Points")
         c1, c2 = st.columns(2)
         with c1:
-            st.toggle("Auto-Pilot Execution (ETH)", value=True, key="eth_bot_toggle_dash")
+            st.toggle("Auto-Pilot Execution (ETH)", value=True, key="eth_bot_toggle")
         with c2:
-            st.info("🟢 Running: Signal listening on Binance/Cosmic/Shark Stream")
+            st.info("🟢 Running: Signal listening on Binance/Cosmic Stream")
 
-# --- FULL STRATEGIES CONTROL CENTER ---
-def render_strategies_page():
-    st.title("⚡ Algorithmic Trading Strategies")
-    st.caption("Configure, activate, and manage institutional trading engines.")
-
-    u_data = st.session_state.get("user_data", {})
-    user_lev = u_data.get("max_leverage", 200)
-
-    strat_tabs = st.tabs([
-        "🔥 BTC Battle (400 Pts)", 
-        "⚡ ETH Battle (10 Pts)", 
-        "🏎️ BTCUSDT HFT", 
-        "🌊 ETHUSDT HFT", 
-        "📊 Active Strategy Deployments"
-    ])
-
-    with strat_tabs[0]:
-        st.markdown("### 🚀 BTC Battle Strategy Engine")
-        st.caption("Automated high-frequency target-seeking engine for BTCUSDT.")
-        
-        c1, c2, c3 = st.columns(3)
-        with c1:
-            btc_target = st.number_input("Target Points (USDT)", min_value=50, max_value=2000, value=400, step=25, key="btc_tgt")
-        with c2:
-            btc_sl = st.number_input("Stop Loss Points (USDT)", min_value=25, max_value=1000, value=200, step=25, key="btc_sl")
-        with c3:
-            btc_lev = st.slider("Strategy Leverage", min_value=1, max_value=int(user_lev), value=min(50, int(user_lev)), key="btc_lev_slide")
-        
-        st.write("")
-        c_act1, c_act2 = st.columns([2, 2])
-        with c_act1:
-            btc_active = st.toggle("Enable BTC Battle Auto-Trader", value=True, key="btc_main_toggle")
-            if btc_active:
-                st.success(f"● Bot Active | Target: +{btc_target} pts | SL: -{btc_sl} pts | Lev: {btc_lev}x")
-            else:
-                st.warning("Bot Paused.")
-        with c_act2:
-            st.selectbox("Execution Broker Routing", ["Shark Exchange API", "Cosmic Mainnet API", "Binance Futures Feed", "Paper Trading Simulation"], key="btc_route")
-
-    with strat_tabs[1]:
-        st.markdown("### ⚡ ETH Battle Strategy Engine")
-        st.caption("Micro-wave scalp momentum bot for ETHUSDT perpetuals.")
-        
-        e1, e2, e3 = st.columns(3)
-        with e1:
-            eth_target = st.number_input("Target Points (USDT)", min_value=2, max_value=100, value=10, step=1, key="eth_tgt")
-        with e2:
-            eth_sl = st.number_input("Stop Loss Points (USDT)", min_value=1, max_value=50, value=6, step=1, key="eth_sl")
-        with e3:
-            eth_lev = st.slider("ETH Leverage", min_value=1, max_value=int(user_lev), value=min(25, int(user_lev)), key="eth_lev_slide")
-            
-        st.write("")
-        e_act1, e_act2 = st.columns([2, 2])
-        with e_act1:
-            eth_active = st.toggle("Enable ETH Battle Auto-Trader", value=True, key="eth_main_toggle")
-            if eth_active:
-                st.success(f"● Bot Active | Target: +{eth_target} pts | SL: -{eth_sl} pts | Lev: {eth_lev}x")
-            else:
-                st.warning("Bot Paused.")
-        with e_act2:
-            st.selectbox("Execution Broker Routing", ["Shark Exchange API", "Cosmic Mainnet API", "Binance Futures Feed", "Paper Trading Simulation"], key="eth_route")
-
-    with strat_tabs[2]:
-        st.markdown("### 🏎️ BTCUSDT High Frequency Engine (HFT)")
-        st.write("Order-book imbalance and delta-volume burst detection engine.")
-        h1, h2 = st.columns(2)
-        with h1:
-            st.number_input("Lot Size (BTC)", min_value=0.001, max_value=5.0, value=0.05, step=0.01, key="btc_hft_lot")
-            st.toggle("Run HFT Order Sniping", value=False, key="btc_hft_tgl")
-        with h2:
-            st.info("HFT Engine listening for liquidity spikes > $1.5M")
-
-    with strat_tabs[3]:
-        st.markdown("### 🌊 ETHUSDT High Frequency Engine (HFT)")
-        st.write("Cross-market funding-arbitrage and tick-level scalp module.")
-        eh1, eh2 = st.columns(2)
-        with eh1:
-            st.number_input("Lot Size (ETH)", min_value=0.01, max_value=50.0, value=0.5, step=0.1, key="eth_hft_lot")
-            st.toggle("Run HFT Order Sniping", value=False, key="eth_hft_tgl")
-        with eh2:
-            st.info("HFT Engine monitoring 500ms orderbook depth.")
-
-    with strat_tabs[4]:
-        st.markdown("### 📊 Active Live Positions Summary")
-        active_pos_data = [
-            {"Strategy": "BTC Battle", "Symbol": "BTCUSDT", "Type": "LONG", "Entry Price": "$80,820.00", "Current Price": "$81,069.99", "PnL": "+$249.99", "Target": "+400 Pts", "Status": "RUNNING"},
-            {"Strategy": "ETH Battle", "Symbol": "ETHUSDT", "Type": "SHORT", "Entry Price": "$2,641.50", "Current Price": "$2,632.41", "PnL": "+$9.09", "Target": "+10 Pts", "Status": "RUNNING"}
-        ]
-        st.dataframe(pd.DataFrame(active_pos_data), use_container_width=True)
-
-# --- COMPLETE LIVE BROKER CONNECTIONS (INCL. SHARK EXCHANGE) ---
-def render_broker_connections():
-    st.markdown("<h2 style='margin-bottom:0;'>Broker Connections</h2>", unsafe_allow_html=True)
-    st.caption("Connect and manage your broker accounts for live execution.")
-
-    username = st.session_state.get("username", "admin")
-    u_db = load_json(USERS_FILE)
-    user_info = u_db.get(username, {})
-    user_brokers = user_info.get("brokers", {})
-
-    brokers_def = [
-        {"id": "zerodha", "name": "Zerodha", "tag": "Stocks", "avatar": "ZE", "bg": "#1d4ed8", "type": "equity"},
-        {"id": "dhan", "name": "Dhan", "tag": "Stocks", "avatar": "DH", "bg": "#2563eb", "type": "equity"},
-        {"id": "angelone", "name": "Angel One", "tag": "Stocks", "avatar": "AN", "bg": "#ea580c", "type": "equity"},
-        {"id": "upstox", "name": "Upstox", "tag": "Stocks", "avatar": "UP", "bg": "#581c87", "type": "equity"},
-        {"id": "binance", "name": "Binance", "tag": "Crypto", "avatar": "BI", "bg": "#eab308", "type": "crypto"},
-        {"id": "bybit", "name": "Bybit", "tag": "Crypto", "avatar": "BY", "bg": "#f59e0b", "type": "crypto"},
-        {"id": "coinswitch", "name": "CoinSwitch", "tag": "Crypto", "avatar": "CO", "bg": "#4f46e5", "type": "crypto"},
-        {"id": "cosmic", "name": "Cosmic Trade", "tag": "Crypto", "avatar": "CO", "bg": "#0f172a", "type": "crypto"},
-        {"id": "shark", "name": "Shark Exchange", "tag": "Crypto", "avatar": "SH", "bg": "#0891b2", "type": "crypto"}
-    ]
-
-    # Grid 4 Columns
-    cols = st.columns(4)
-    for idx, b in enumerate(brokers_def):
-        col = cols[idx % 4]
-        b_id = b["id"]
-        b_data = user_brokers.get(b_id, {})
-        is_conn = b_data.get("connected", False)
-        api_key_masked = b_data.get("api_key_mask", "—")
-        expiry_val = b_data.get("expiry", "—")
-
-        with col:
-            status_html = (
-                '<span class="status-pill-conn">● CONNECTED</span>' 
-                if is_conn else 
-                '<span class="status-pill-disc">● DISCONNECTED</span>'
-            )
-            badge_class = "broker-badge-stocks" if b["tag"] == "Stocks" else "broker-badge-crypto"
-
-            st.markdown(f"""
-            <div class="broker-card">
-                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <div class="avatar-circle" style="background-color:{b['bg']};">{b['avatar']}</div>
-                        <div>
-                            <div style="font-weight:700; font-size:15px; color:#0f172a;">{b['name']}</div>
-                            <span class="{badge_class}">{b['tag']}</span>
-                        </div>
-                    </div>
-                    <div>{status_html}</div>
-                </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px; background:#f8fafc; padding:8px 10px; border-radius:8px;">
-                    <div>
-                        <div style="font-size:11px; color:#64748b;">API Key</div>
-                        <div style="font-size:12px; font-weight:600; color:#0f172a;">{api_key_masked}</div>
-                    </div>
-                    <div>
-                        <div style="font-size:11px; color:#64748b;">Token Expiry</div>
-                        <div style="font-size:12px; font-weight:600; color:#0f172a;">{expiry_val}</div>
-                    </div>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-
-            if is_conn:
-                if st.button("🔌 Disconnect", key=f"disc_{b_id}", use_container_width=True):
-                    user_brokers[b_id]["connected"] = False
-                    user_info["brokers"] = user_brokers
-                    u_db[username] = user_info
-                    save_json(USERS_FILE, u_db)
-                    st.toast(f"Disconnected from {b['name']}", icon="⚠️")
-                    st.rerun()
-            else:
-                with st.popover(f"⚡ Connect {b['name']}", use_container_width=True):
-                    st.markdown(f"**Setup Live Credentials for {b['name']}**")
-                    inp_key = st.text_input("API Key*", key=f"k_{b_id}", placeholder="Enter API Key")
-                    inp_sec = st.text_input("API Secret*", type="password", key=f"s_{b_id}", placeholder="Enter API Secret")
-                    
-                    if b["type"] == "equity":
-                        st.text_input("Client ID / TOTP Secret (Optional)", key=f"t_{b_id}")
-                    
-                    if st.button("Verify & Activate", key=f"sub_{b_id}", type="primary", use_container_width=True):
-                        if not inp_key or not inp_sec:
-                            st.error("API Key & Secret are required!")
-                        else:
-                            exp_date = (datetime.now() + timedelta(days=90)).strftime("%d-%b-%Y")
-                            mask = inp_key[:4] + "••••" + inp_key[-3:] if len(inp_key) >= 7 else "••••••••"
-                            user_brokers[b_id] = {
-                                "connected": True,
-                                "api_key_mask": mask,
-                                "expiry": exp_date,
-                                "connected_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                            }
-                            user_info["brokers"] = user_brokers
-                            u_db[username] = user_info
-                            save_json(USERS_FILE, u_db)
-                            log_audit(username, "BROKER_CONNECT", f"Connected {b['name']}")
-                            st.success(f"{b['name']} Connected Successfully!")
-                            st.rerun()
-
-# --- ADMIN USERS VIEW ---
+# --- VIEW: ADMIN USERS TABLE + CONTROLS + 200X LEVERAGE ---
 def render_admin_users():
     st.markdown("<h2 style='margin-bottom:0;'>Admin Users</h2>", unsafe_allow_html=True)
     st.caption("Master administration route active.")
@@ -434,6 +349,7 @@ def render_admin_users():
         init_db()
         u_db = load_json(USERS_FILE)
 
+    # 1. Clean Structured Table
     table_rows = []
     for k, v in u_db.items():
         table_rows.append({
@@ -461,7 +377,7 @@ def render_admin_users():
                 new_s = st.selectbox("Initial Status", ["Active", "Suspended"])
                 new_l = st.number_input("Max Leverage (1x - 200x)", min_value=1, max_value=200, value=200)
 
-            new_strats = st.multiselect("Allowed Strategies", ["BTC Battle", "ETH Battle", "BTCUSDT HFT", "ETHUSDT HFT"], default=["BTC Battle", "ETH Battle"])
+            new_strats = st.multiselect("Allowed Strategies", ["BTCUSDT HFT", "ETHUSDT HFT", "BTC Battle", "ETH Battle"], default=["BTC Battle", "ETH Battle"])
             
             if st.form_submit_button("🚀 Create Client Account", type="primary", use_container_width=True):
                 if not new_u or not new_n or not new_p:
@@ -476,10 +392,10 @@ def render_admin_users():
                         "password": new_p,
                         "allowed_strategies": new_strats,
                         "max_leverage": new_l,
-                        "brokers": {}
+                        "brokers": {"cosmic": {"connected": False}}
                     }
                     save_json(USERS_FILE, u_db)
-                    st.success(f"Client '{new_u}' created with {new_l}x leverage!")
+                    st.success(f"Client '{new_u}' successfully created with {new_l}x leverage!")
                     st.rerun()
 
     with t_manage:
@@ -492,8 +408,8 @@ def render_admin_users():
                     st.write(f"**Password:** `{udata.get('password', '******')}`")
                     st.write(f"**Max Leverage:** `{udata.get('max_leverage', 50)}x`")
                 with col2:
-                    active_brokers_count = sum(1 for b in udata.get("brokers", {}).values() if b.get("connected"))
-                    st.write(f"**Active Brokers:** `🟢 {active_brokers_count} Connected`")
+                    is_conn = udata.get("brokers", {}).get("cosmic", {}).get("connected", False)
+                    st.write(f"**Broker:** {'🟢 Connected' if is_conn else '🔴 Disconnected'}")
                     st.caption(f"Allowed: {', '.join(udata.get('allowed_strategies', []))}")
                 with col3:
                     tgt = "Suspended" if c_stat == "Active" else "Active"
@@ -533,7 +449,7 @@ def render_placeholder(title):
     st.caption(f"Realtime {title} interface.")
     st.info(f"⚡ {title} module active & synchronized with mainnet engine.")
 
-# --- MAIN APP CONTROLLER ---
+# --- APPLICATION CONTROLLER ---
 def main():
     if not st.session_state["authenticated"]:
         render_login()
@@ -542,6 +458,7 @@ def main():
     render_top_bar()
     user_role = st.session_state.get("user_data", {}).get("role", "client")
 
+    # --- SIDEBAR (FIXED BUTTON MENU FORMAT) ---
     with st.sidebar:
         st.markdown("<h3 style='margin-bottom:0;'>⚡ Stockimyze</h3>", unsafe_allow_html=True)
         st.caption("Institutional Algo Trading Engine")
@@ -592,14 +509,10 @@ def main():
             st.session_state["selected_page"] = "Dashboard"
             st.rerun()
 
-    # Routing
+    # --- ROUTING ---
     sel = st.session_state.get("selected_page", "Dashboard")
     if sel == "Dashboard":
         render_dashboard()
-    elif sel == "Strategies":
-        render_strategies_page()
-    elif sel == "Broker Connection":
-        render_broker_connections()
     elif sel == "Admin_Users":
         render_admin_users()
     else:
