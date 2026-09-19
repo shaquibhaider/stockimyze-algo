@@ -7,7 +7,7 @@ import time
 import hashlib
 from datetime import datetime
 
-# Page Configuration - Institutional Theme
+# Page Configuration
 st.set_page_config(
     page_title="Stockimyze AlgoTrade",
     page_icon="⚡",
@@ -15,84 +15,23 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# FIXED INSTITUTIONAL UI CSS (LOCKED THEME)
+# Custom Institutional CSS
 st.markdown("""
 <style>
-    /* Main Background & Fonts */
     .stApp { background-color: #f8fafc; }
-    
-    /* Top Header Bar */
-    .header-box {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        background: #ffffff;
-        padding: 10px 18px;
-        border-radius: 12px;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
-        margin-bottom: 20px;
-    }
-    .badge-market {
-        padding: 6px 12px;
-        border-radius: 8px;
-        font-size: 13px;
-        font-weight: 600;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-    }
-    
-    /* Sidebar Headers & Categories */
-    .sidebar-category {
-        font-size: 11px;
-        font-weight: 800;
-        color: #94a3b8;
-        letter-spacing: 0.8px;
-        margin-top: 18px;
-        margin-bottom: 8px;
-        padding-left: 6px;
-        text-transform: uppercase;
-    }
-    
-    /* Sidebar Buttons - Professional Flat Style */
-    div[data-testid="stSidebar"] div.stButton > button {
-        text-align: left;
-        border-radius: 8px;
-        padding: 8px 14px;
-        font-weight: 500;
-        font-size: 13px;
-        margin-bottom: 4px;
-        border: 1px solid transparent;
-        transition: all 0.2s ease;
-    }
-    div[data-testid="stSidebar"] div.stButton > button:hover {
-        border: 1px solid #cbd5e1;
-        background-color: #f1f5f9;
-        color: #0f172a;
-    }
-    
-    /* Metrics Box */
-    div[data-testid="stMetric"] {
-        background-color: #ffffff;
-        padding: 14px 18px;
-        border-radius: 10px;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-    }
-    
-    /* Clean Expanders & Cards */
-    div[data-testid="stExpander"] {
-        background-color: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 10px;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.02);
-    }
+    .header-box { display: flex; align-items: center; justify-content: space-between; background: #ffffff; padding: 10px 18px; border-radius: 12px; border: 1px solid #e2e8f0; }
+    .sidebar-category { font-size: 11px; font-weight: 800; color: #94a3b8; letter-spacing: 0.8px; margin-top: 18px; margin-bottom: 8px; padding-left: 6px; text-transform: uppercase; }
+    div[data-testid="stSidebar"] div.stButton > button { text-align: left; border-radius: 8px; padding: 8px 14px; font-weight: 500; font-size: 13px; margin-bottom: 4px; border: 1px solid transparent; }
+    div[data-testid="stSidebar"] div.stButton > button:hover { border: 1px solid #cbd5e1; background-color: #f1f5f9; color: #0f172a; }
+    div[data-testid="stMetric"] { background-color: #ffffff; padding: 14px 18px; border-radius: 10px; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+    div[data-testid="stExpander"] { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; }
+    .strategy-card { background: #ffffff; padding: 18px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 14px; }
 </style>
 """, unsafe_allow_html=True)
 
 USERS_FILE = "users_db.json"
 AUDIT_FILE = "audit_log.json"
+CONFIG_FILE = "strategy_config.json"
 
 def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
@@ -152,7 +91,7 @@ def init_db():
 
 init_db()
 
-# Session State Tracking
+# Session State
 if "authenticated" not in st.session_state:
     st.session_state["authenticated"] = False
 if "username" not in st.session_state:
@@ -162,7 +101,7 @@ if "user_data" not in st.session_state:
 if "selected_page" not in st.session_state:
     st.session_state["selected_page"] = "Dashboard"
 
-# --- TOP ORIGINAL LIVE TICKER BAR ---
+# Top Live Ticker Bar
 def render_top_bar():
     c1, c2, c3, c4 = st.columns([2.2, 2.2, 2.5, 2.1])
     with c1:
@@ -196,7 +135,7 @@ def render_top_bar():
         """, unsafe_allow_html=True)
     st.markdown("<hr style='margin-top:10px; margin-bottom:18px; border:none; border-top:1px solid #e2e8f0;'>", unsafe_allow_html=True)
 
-# --- LOGIN SCREEN ---
+# Login Page
 def render_login():
     st.markdown("<br><br>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns([1, 1.3, 1])
@@ -230,7 +169,7 @@ def render_login():
                             "role": valid_defaults[u_in]["role"],
                             "status": "Active",
                             "password": valid_defaults[u_in]["pass"],
-                            "allowed_strategies": ["BTC Battle", "ETH Battle"],
+                            "allowed_strategies": ["BTC Battle", "ETH Battle", "BTCUSDT HFT", "ETHUSDT HFT"],
                             "max_leverage": 200,
                             "brokers": {}
                         }
@@ -243,13 +182,12 @@ def render_login():
                     st.session_state["authenticated"] = True
                     st.session_state["username"] = u_in
                     st.session_state["user_data"] = user
-                    st.session_state["selected_page"] = "Admin_Users" if user.get("role") == "admin" else "Dashboard"
+                    st.session_state["selected_page"] = "Dashboard"
                     st.rerun()
                 else:
                     st.error("Invalid credentials or account suspended.")
-        st.caption("Default Admin: `admin` / `admin123` • Client: `client1` / `client123`")
 
-# --- ORIGINAL VIEW: TRADING DASHBOARD ---
+# Dashboard View
 def render_dashboard():
     st.subheader("Trading & Execution Overview")
     u_data = st.session_state.get("user_data", {})
@@ -260,7 +198,7 @@ def render_dashboard():
     col3.metric("Max Allowed Leverage", f"{u_data.get('max_leverage', 200)}x")
     col4.metric("Account Status", u_data.get("status", "Active"))
     
-    st.markdown("### Active Algorithmic Engines")
+    st.markdown("### Algorithmic Battle Bots Overview")
     t1, t2 = st.tabs(["🚀 BTC Battle (400 Pts Target)", "⚡ ETH Battle (10 Pts Target)"])
     
     with t1:
@@ -268,7 +206,7 @@ def render_dashboard():
         st.write("**Target:** 400 Points | **Stoploss:** 200 Points")
         c1, c2 = st.columns(2)
         with c1:
-            st.toggle("Auto-Pilot Execution (BTC)", value=True, key="btc_bot_toggle")
+            st.toggle("Auto-Pilot Execution (BTC)", value=True, key="btc_bot_toggle_dash")
         with c2:
             st.info("🟢 Running: Signal listening on Binance/Cosmic Stream")
             
@@ -276,12 +214,102 @@ def render_dashboard():
         st.write("**Strategy:** ETHUSDT Scalp Micro-Wave")
         st.write("**Target:** 10 Points | **Stoploss:** 6 Points")
         c1, c2 = st.columns(2)
-        with c1:
-            st.toggle("Auto-Pilot Execution (ETH)", value=True, key="eth_bot_toggle")
+        with c2:
+            st.toggle("Auto-Pilot Execution (ETH)", value=True, key="eth_bot_toggle_dash")
         with c2:
             st.info("🟢 Running: Signal listening on Binance/Cosmic Stream")
 
-# --- VIEW: ADMIN USERS TABLE + CONTROLS + 200X LEVERAGE ---
+# FULL STRATEGIES CONTROL CENTER (RESTORED ORIGINAL STRATEGIES PAGE)
+def render_strategies_page():
+    st.title("⚡ Algorithmic Trading Strategies")
+    st.caption("Configure, activate, and manage institutional trading engines.")
+
+    u_data = st.session_state.get("user_data", {})
+    user_lev = u_data.get("max_leverage", 200)
+
+    strat_tabs = st.tabs([
+        "🔥 BTC Battle (400 Pts)", 
+        "⚡ ETH Battle (10 Pts)", 
+        "🏎️ BTCUSDT HFT", 
+        "🌊 ETHUSDT HFT", 
+        "📊 Active Strategy Deployments"
+    ])
+
+    with strat_tabs[0]:
+        st.markdown("### 🚀 BTC Battle Strategy Engine")
+        st.caption("Automated high-frequency target-seeking engine for BTCUSDT.")
+        
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            btc_target = st.number_input("Target Points (USDT)", min_value=50, max_value=2000, value=400, step=25, key="btc_tgt")
+        with c2:
+            btc_sl = st.number_input("Stop Loss Points (USDT)", min_value=25, max_value=1000, value=200, step=25, key="btc_sl")
+        with c3:
+            btc_lev = st.slider("Strategy Leverage", min_value=1, max_value=int(user_lev), value=min(50, int(user_lev)), key="btc_lev_slide")
+        
+        st.write("")
+        c_act1, c_act2 = st.columns([2, 2])
+        with c_act1:
+            btc_active = st.toggle("Enable BTC Battle Auto-Trader", value=True, key="btc_main_toggle")
+            if btc_active:
+                st.success(f"● Bot Active | Target: +{btc_target} pts | SL: -{btc_sl} pts | Lev: {btc_lev}x")
+            else:
+                st.warning("Bot Paused.")
+        with c_act2:
+            st.selectbox("Execution Broker Routing", ["Cosmic Mainnet API", "Binance Futures Feed", "Paper Trading Simulation"], key="btc_route")
+
+    with strat_tabs[1]:
+        st.markdown("### ⚡ ETH Battle Strategy Engine")
+        st.caption("Micro-wave scalp momentum bot for ETHUSDT perpetuals.")
+        
+        e1, e2, e3 = st.columns(3)
+        with e1:
+            eth_target = st.number_input("Target Points (USDT)", min_value=2, max_value=100, value=10, step=1, key="eth_tgt")
+        with e2:
+            eth_sl = st.number_input("Stop Loss Points (USDT)", min_value=1, max_value=50, value=6, step=1, key="eth_sl")
+        with e3:
+            eth_lev = st.slider("ETH Leverage", min_value=1, max_value=int(user_lev), value=min(25, int(user_lev)), key="eth_lev_slide")
+            
+        st.write("")
+        e_act1, e_act2 = st.columns([2, 2])
+        with e_act1:
+            eth_active = st.toggle("Enable ETH Battle Auto-Trader", value=True, key="eth_main_toggle")
+            if eth_active:
+                st.success(f"● Bot Active | Target: +{eth_target} pts | SL: -{eth_sl} pts | Lev: {eth_lev}x")
+            else:
+                st.warning("Bot Paused.")
+        with e_act2:
+            st.selectbox("Execution Broker Routing", ["Cosmic Mainnet API", "Binance Futures Feed", "Paper Trading Simulation"], key="eth_route")
+
+    with strat_tabs[2]:
+        st.markdown("### 🏎️ BTCUSDT High Frequency Engine (HFT)")
+        st.write("Order-book imbalance and delta-volume burst detection engine.")
+        h1, h2 = st.columns(2)
+        with h1:
+            st.number_input("Lot Size (BTC)", min_value=0.001, max_value=5.0, value=0.05, step=0.01, key="btc_hft_lot")
+            st.toggle("Run HFT Order Sniping", value=False, key="btc_hft_tgl")
+        with h2:
+            st.info("HFT Engine listening for liquidity spikes > $1.5M")
+
+    with strat_tabs[3]:
+        st.markdown("### 🌊 ETHUSDT High Frequency Engine (HFT)")
+        st.write("Cross-market funding-arbitrage and tick-level scalp module.")
+        eh1, eh2 = st.columns(2)
+        with eh1:
+            st.number_input("Lot Size (ETH)", min_value=0.01, max_value=50.0, value=0.5, step=0.1, key="eth_hft_lot")
+            st.toggle("Run HFT Order Sniping", value=False, key="eth_hft_tgl")
+        with eh2:
+            st.info("HFT Engine monitoring 500ms orderbook depth.")
+
+    with strat_tabs[4]:
+        st.markdown("### 📊 Active Live Positions Summary")
+        active_pos_data = [
+            {"Strategy": "BTC Battle", "Symbol": "BTCUSDT", "Type": "LONG", "Entry Price": "$80,820.00", "Current Price": "$81,069.99", "PnL": "+$249.99", "Target": "+400 Pts", "Status": "RUNNING"},
+            {"Strategy": "ETH Battle", "Symbol": "ETHUSDT", "Type": "SHORT", "Entry Price": "$2,641.50", "Current Price": "$2,632.41", "PnL": "+$9.09", "Target": "+10 Pts", "Status": "RUNNING"}
+        ]
+        st.dataframe(pd.DataFrame(active_pos_data), use_container_width=True)
+
+# Admin Users View
 def render_admin_users():
     st.markdown("<h2 style='margin-bottom:0;'>Admin Users</h2>", unsafe_allow_html=True)
     st.caption("Master administration route active.")
@@ -291,7 +319,6 @@ def render_admin_users():
         init_db()
         u_db = load_json(USERS_FILE)
 
-    # 1. Clean Structured Table
     table_rows = []
     for k, v in u_db.items():
         table_rows.append({
@@ -337,7 +364,7 @@ def render_admin_users():
                         "brokers": {"cosmic": {"connected": False}}
                     }
                     save_json(USERS_FILE, u_db)
-                    st.success(f"Client '{new_u}' successfully created with {new_l}x leverage!")
+                    st.success(f"Client '{new_u}' created with {new_l}x leverage!")
                     st.rerun()
 
     with t_manage:
@@ -391,7 +418,7 @@ def render_placeholder(title):
     st.caption(f"Realtime {title} interface.")
     st.info(f"⚡ {title} module active & synchronized with mainnet engine.")
 
-# --- APPLICATION CONTROLLER ---
+# Main Controller
 def main():
     if not st.session_state["authenticated"]:
         render_login()
@@ -400,7 +427,6 @@ def main():
     render_top_bar()
     user_role = st.session_state.get("user_data", {}).get("role", "client")
 
-    # --- SIDEBAR (FIXED BUTTON MENU FORMAT) ---
     with st.sidebar:
         st.markdown("<h3 style='margin-bottom:0;'>⚡ Stockimyze</h3>", unsafe_allow_html=True)
         st.caption("Institutional Algo Trading Engine")
@@ -451,10 +477,12 @@ def main():
             st.session_state["selected_page"] = "Dashboard"
             st.rerun()
 
-    # --- ROUTING ---
+    # Routing
     sel = st.session_state.get("selected_page", "Dashboard")
     if sel == "Dashboard":
         render_dashboard()
+    elif sel == "Strategies":
+        render_strategies_page()
     elif sel == "Admin_Users":
         render_admin_users()
     else:
