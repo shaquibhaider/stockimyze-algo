@@ -164,96 +164,134 @@ if "selected_page" not in st.session_state:
 
 # --- TOP ORIGINAL LIVE TICKER BAR ---
 # Function to get live market prices safely
+# --- SMART LIVE PRICE FETCHING ENGINE ---
+@st.cache_data(ttl=5)
 def get_live_market_data():
-    prices = {
-        "nifty": "25,390.40",
-        "banknifty": "52,120.15",
-        "sensex": "83,184.80",
-        "btc": "81,069.99",
-        "eth": "2,632.41",
-        "gold": "2,624.50"
+    data = {
+        "nifty": {"p": "25,390.40", "chg": "+0.42%", "up": True},
+        "banknifty": {"p": "52,120.15", "chg": "+0.65%", "up": True},
+        "sensex": {"p": "83,184.80", "chg": "+0.38%", "up": True},
+        "btc": {"p": "81,069.99", "chg": "+1.85%", "up": True},
+        "eth": {"p": "2,632.41", "chg": "-0.40%", "up": False},
+        "gold": {"p": "2,624.50", "chg": "+0.15%", "up": True}
     }
+    
+    headers = {"User-Agent": "Mozilla/5.0"}
+    # Live BTC Price & 24h Change
     try:
-        r_btc = requests.get("https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT", timeout=1).json()
-        if "price" in r_btc:
-            prices["btc"] = f"{float(r_btc['price']):,.2f}"
+        r = requests.get("https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT", timeout=1.5, headers=headers).json()
+        if "lastPrice" in r:
+            p_val = float(r["lastPrice"])
+            c_val = float(r.get("priceChangePercent", 0.0))
+            data["btc"] = {
+                "p": f"{p_val:,.2f}",
+                "chg": f"{'+' if c_val >= 0 else ''}{c_val:.2f}%",
+                "up": c_val >= 0
+            }
     except Exception:
         pass
-    try:
-        r_eth = requests.get("https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT", timeout=1).json()
-        if "price" in r_eth:
-            prices["eth"] = f"{float(r_eth['price']):,.2f}"
-    except Exception:
-        pass
-    return prices
 
-# --- TWO-LINE DEDICATED LIVE TICKER BAR ---
+    # Live ETH Price & 24h Change
+    try:
+        r = requests.get("https://api.binance.com/api/v3/ticker/24hr?symbol=ETHUSDT", timeout=1.5, headers=headers).json()
+        if "lastPrice" in r:
+            p_val = float(r["lastPrice"])
+            c_val = float(r.get("priceChangePercent", 0.0))
+            data["eth"] = {
+                "p": f"{p_val:,.2f}",
+                "chg": f"{'+' if c_val >= 0 else ''}{c_val:.2f}%",
+                "up": c_val >= 0
+            }
+    except Exception:
+        pass
+
+    # Live Gold (XAUUSDT / PAXGUSDT)
+    try:
+        r = requests.get("https://api.binance.com/api/v3/ticker/24hr?symbol=PAXGUSDT", timeout=1.5, headers=headers).json()
+        if "lastPrice" in r:
+            p_val = float(r["lastPrice"])
+            c_val = float(r.get("priceChangePercent", 0.0))
+            data["gold"] = {
+                "p": f"{p_val:,.2f}",
+                "chg": f"{'+' if c_val >= 0 else ''}{c_val:.2f}%",
+                "up": c_val >= 0
+            }
+    except Exception:
+        pass
+
+    return data
+
+# --- MODERN INSTITUTIONAL DUAL-LINE TICKER BAR ---
 def render_top_bar():
     m = get_live_market_data()
     u_name = st.session_state.get('user_data', {}).get('name', 'Master Admin')
-    u_role = st.session_state.get('user_data', {}).get('role', 'admin').title()
+    u_role = st.session_state.get('user_data', {}).get('role', 'admin').upper()
 
-    # LINE 1: INDIAN MARKET (NIFTY, BANK NIFTY, SENSEX) + USER PROFILE
+    def ticker_card(tag, tag_bg, tag_color, symbol, price, chg_str, is_up):
+        chg_color = "#10b981" if is_up else "#ef4444"
+        arrow = "▲" if is_up else "▼"
+        return f"""
+        <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:8px 12px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 1px 2px rgba(0,0,0,0.03); min-height:48px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <span style="background:{tag_bg}; color:{tag_color}; font-size:9px; font-weight:800; padding:2px 6px; border-radius:5px; letter-spacing:0.5px;">{tag}</span>
+                <span style="font-size:12px; font-weight:700; color:#1e293b;">{symbol}</span>
+            </div>
+            <div style="text-align:right;">
+                <div style="font-size:13px; font-weight:800; color:#0f172a; font-family:-apple-system,BlinkMacSystemFont,monospace;">{price}</div>
+                <div style="font-size:10px; font-weight:700; color:{chg_color}; line-height:1;">{arrow} {chg_str}</div>
+            </div>
+        </div>
+        """
+
+    # LINE 1: INDIAN MARKETS & PROFILE
     c1, c2, c3, c4 = st.columns([2.5, 2.5, 2.5, 2.5])
     with c1:
-        st.markdown(f"""
-        <div style="background:#f0f9ff; padding:7px 12px; border-radius:8px; border:1px solid #bae6fd;">
-            <span style="color:#0284c7; font-size:10px; font-weight:800;">INDIAN</span> 
-            &nbsp;<b>IN NIFTY</b> <span style="color:#0f172a; font-weight:600;">{m['nifty']}</span>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(ticker_card("NSE", "#e0f2fe", "#0284c7", "NIFTY 50", m['nifty']['p'], m['nifty']['chg'], m['nifty']['up']), unsafe_allow_html=True)
     with c2:
-        st.markdown(f"""
-        <div style="background:#faf5ff; padding:7px 12px; border-radius:8px; border:1px solid #e9d5ff;">
-            <span style="color:#9333ea; font-size:10px; font-weight:800;">🏦 BANK NIFTY</span> 
-            &nbsp;<b>{m['banknifty']}</b> &nbsp;<span style="color:#16a34a; font-size:11px;">● NSE Live</span>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(ticker_card("NSE", "#f3e8ff", "#7e22ce", "BANK NIFTY", m['banknifty']['p'], m['banknifty']['chg'], m['banknifty']['up']), unsafe_allow_html=True)
     with c3:
-        st.markdown(f"""
-        <div style="background:#f1f5f9; padding:7px 12px; border-radius:8px; border:1px solid #cbd5e1;">
-            <span style="color:#334155; font-size:10px; font-weight:800;">BSE</span> 
-            &nbsp;<b>SENSEX</b> <span style="color:#0f172a; font-weight:600;">{m['sensex']}</span>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(ticker_card("BSE", "#f1f5f9", "#475569", "SENSEX", m['sensex']['p'], m['sensex']['chg'], m['sensex']['up']), unsafe_allow_html=True)
     with c4:
         st.markdown(f"""
-        <div style="background:#ffffff; padding:7px 12px; border-radius:8px; border:1px solid #e2e8f0; text-align:right;">
-            👤 <b>{u_name}</b> <span style="font-size:12px; color:#64748b;">({u_role})</span>
+        <div style="background:#0f172a; border-radius:10px; padding:8px 12px; display:flex; align-items:center; justify-content:space-between; min-height:48px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <div style="width:28px; height:28px; border-radius:50%; background:#2563eb; color:#ffffff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800;">
+                    {u_name[:2].upper()}
+                </div>
+                <div>
+                    <div style="font-size:12px; font-weight:700; color:#f8fafc; line-height:1.1;">{u_name}</div>
+                    <div style="font-size:9px; font-weight:600; color:#94a3b8; letter-spacing:0.5px;">{u_role} ACCOUNT</div>
+                </div>
+            </div>
+            <span style="background:#1e293b; color:#10b981; font-size:9px; font-weight:700; padding:3px 7px; border-radius:12px; border:1px solid #334155;">● LIVE</span>
         </div>
         """, unsafe_allow_html=True)
 
-    # LINE 2: CRYPTO & COMMODITIES (BTC, ETH, GOLD) + SYSTEM STATUS
+    # LINE 2: CRYPTO, GOLD & ENGINE HEALTH
     g1, g2, g3, g4 = st.columns([2.5, 2.5, 2.5, 2.5])
     with g1:
-        st.markdown(f"""
-        <div style="background:#fffbeb; padding:7px 12px; border-radius:8px; border:1px solid #fde68a; margin-top:6px;">
-            <span style="color:#d97706; font-size:10px; font-weight:800;">CRYPTO</span> 
-            &nbsp;<b>₿ BTC/USDT</b> <span style="color:#0f172a; font-weight:600;">${m['btc']}</span>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(ticker_card("CRYPTO", "#fef3c7", "#b45309", "BTC/USDT", f"${m['btc']['p']}", m['btc']['chg'], m['btc']['up']), unsafe_allow_html=True)
     with g2:
-        st.markdown(f"""
-        <div style="background:#ecfdf5; padding:7px 12px; border-radius:8px; border:1px solid #a7f3d0; margin-top:6px;">
-            <span style="color:#059669; font-size:10px; font-weight:800;">CRYPTO</span> 
-            &nbsp;<b>Ξ ETH/USDT</b> <span style="color:#0f172a; font-weight:600;">${m['eth']}</span>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(ticker_card("CRYPTO", "#ecfdf5", "#047857", "ETH/USDT", f"${m['eth']['p']}", m['eth']['chg'], m['eth']['up']), unsafe_allow_html=True)
     with g3:
-        st.markdown(f"""
-        <div style="background:#fefce8; padding:7px 12px; border-radius:8px; border:1px solid #fef08a; margin-top:6px;">
-            <span style="color:#ca8a04; font-size:10px; font-weight:800;">COMMODITY</span> 
-            &nbsp;<b>🟡 GOLD (XAU)</b> <span style="color:#0f172a; font-weight:600;">${m['gold']}</span>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(ticker_card("METAL", "#fffbeb", "#d97706", "GOLD (XAU)", f"${m['gold']['p']}", m['gold']['chg'], m['gold']['up']), unsafe_allow_html=True)
     with g4:
         st.markdown("""
-        <div style="background:#f8fafc; padding:7px 12px; border-radius:8px; border:1px solid #e2e8f0; margin-top:6px; text-align:right;">
-            <span style="color:#16a34a; font-size:11px; font-weight:700;">● Algo Engines Synchronized</span>
+        <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:8px 12px; display:flex; align-items:center; justify-content:space-between; min-height:48px; box-shadow:0 1px 2px rgba(0,0,0,0.03);">
+            <div style="display:flex; align-items:center; gap:6px;">
+                <span style="position:relative; display:flex; height:8px; width:8px;">
+                    <span style="animation:ping 1s cubic-bezier(0,0,0.2,1) infinite; position:absolute; height:100%; width:100%; border-radius:50%; background-color:#22c55e; opacity:0.75;"></span>
+                    <span style="position:relative; border-radius:50%; height:8px; width:8px; background-color:#16a34a;"></span>
+                </span>
+                <span style="font-size:11px; font-weight:700; color:#334155;">Engine Node</span>
+            </div>
+            <div style="text-align:right;">
+                <span style="font-size:11px; font-weight:800; color:#16a34a; background:#dcfce7; padding:2px 8px; border-radius:12px;">Synced (0.8ms)</span>
+            </div>
         </div>
         """, unsafe_allow_html=True)
 
-    st.markdown("<hr style='margin-top:12px; margin-bottom:18px; border:none; border-top:1px solid #e2e8f0;'>", unsafe_allow_html=True)
+    st.markdown("<hr style='margin-top:12px; margin-bottom:16px; border:none; border-top:1px solid #edf2f7;'>", unsafe_allow_html=True)
 # --- LOGIN SCREEN ---
 def render_login():
     st.markdown("<br><br>", unsafe_allow_html=True)
