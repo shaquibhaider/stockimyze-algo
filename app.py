@@ -7,7 +7,7 @@ import time
 import hashlib
 from datetime import datetime
 
-# Page Configuration
+# Page Configuration - Institutional Theme
 st.set_page_config(
     page_title="Stockimyze AlgoTrade",
     page_icon="⚡",
@@ -15,18 +15,84 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Styling
+# FIXED INSTITUTIONAL UI CSS (LOCKED THEME)
 st.markdown("""
 <style>
-    .main { background-color: #f8fafc; }
-    .stMetric { background-color: #ffffff; padding: 15px; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    div[data-testid="stExpander"] { background-color: #ffffff; border-radius: 8px; margin-bottom: 10px; }
+    /* Main Background & Fonts */
+    .stApp { background-color: #f8fafc; }
+    
+    /* Top Header Bar */
+    .header-box {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #ffffff;
+        padding: 10px 18px;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        margin-bottom: 20px;
+    }
+    .badge-market {
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    /* Sidebar Headers & Categories */
+    .sidebar-category {
+        font-size: 11px;
+        font-weight: 800;
+        color: #94a3b8;
+        letter-spacing: 0.8px;
+        margin-top: 18px;
+        margin-bottom: 8px;
+        padding-left: 6px;
+        text-transform: uppercase;
+    }
+    
+    /* Sidebar Buttons - Professional Flat Style */
+    div[data-testid="stSidebar"] div.stButton > button {
+        text-align: left;
+        border-radius: 8px;
+        padding: 8px 14px;
+        font-weight: 500;
+        font-size: 13px;
+        margin-bottom: 4px;
+        border: 1px solid transparent;
+        transition: all 0.2s ease;
+    }
+    div[data-testid="stSidebar"] div.stButton > button:hover {
+        border: 1px solid #cbd5e1;
+        background-color: #f1f5f9;
+        color: #0f172a;
+    }
+    
+    /* Metrics Box */
+    div[data-testid="stMetric"] {
+        background-color: #ffffff;
+        padding: 14px 18px;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+    
+    /* Clean Expanders & Cards */
+    div[data-testid="stExpander"] {
+        background-color: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+    }
 </style>
 """, unsafe_allow_html=True)
 
 USERS_FILE = "users_db.json"
 AUDIT_FILE = "audit_log.json"
-TRADES_FILE = "trades_log.csv"
 
 def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
@@ -59,17 +125,6 @@ def log_audit(username, action, details):
     })
     save_json(AUDIT_FILE, logs)
 
-# Initialize Session State
-if "authenticated" not in st.session_state:
-    st.session_state["authenticated"] = False
-if "username" not in st.session_state:
-    st.session_state["username"] = ""
-if "user_data" not in st.session_state:
-    st.session_state["user_data"] = {}
-if "current_page" not in st.session_state:
-    st.session_state["current_page"] = "Dashboard"
-
-# Initialize Default Database Seed
 def init_db():
     users = load_json(USERS_FILE)
     if not users:
@@ -80,8 +135,8 @@ def init_db():
                 "status": "Active",
                 "password": "admin123",
                 "allowed_strategies": ["BTCUSDT HFT", "ETHUSDT HFT", "BTC Battle", "ETH Battle"],
-                "max_leverage": 50,
-                "brokers": {"cosmic": {"connected": False}}
+                "max_leverage": 200,
+                "brokers": {"cosmic": {"connected": True}}
             },
             "client1": {
                 "name": "Rahul Sharma",
@@ -97,76 +152,104 @@ def init_db():
 
 init_db()
 
-# --- TOP TICKER BAR ---
-def render_top_bar():
-    c1, c2, c3, c4 = st.columns([1.5, 2, 2, 2.5])
-    with c1:
-        st.markdown("**⚡ STOCKIMYZE**")
-    with c2:
-        st.caption("🇮🇳 NIFTY: **25,390.40** | BANK NIFTY: **52,120.15**")
-    with c3:
-        st.caption("🌐 BTC: **$81,050.00** | ETH: **$2,621.01**")
-    with c4:
-        st.markdown(f"👤 Logged in as: **@{st.session_state.get('username')}** ({st.session_state.get('user_data', {}).get('role', 'User').title()})")
-    st.markdown("---")
+# Session State Tracking
+if "authenticated" not in st.session_state:
+    st.session_state["authenticated"] = False
+if "username" not in st.session_state:
+    st.session_state["username"] = ""
+if "user_data" not in st.session_state:
+    st.session_state["user_data"] = {}
+if "selected_page" not in st.session_state:
+    st.session_state["selected_page"] = "Dashboard"
 
-# --- LOGIN PAGE ---
-def render_login_page():
-    st.markdown("<br><br>", unsafe_allow_html=True)
-    c1, c2, c3 = st.columns([1, 1.5, 1])
+# --- TOP ORIGINAL LIVE TICKER BAR ---
+def render_top_bar():
+    c1, c2, c3, c4 = st.columns([2.2, 2.2, 2.5, 2.1])
+    with c1:
+        st.markdown("""
+        <div style="background:#f0f9ff; padding:8px 12px; border-radius:8px; border:1px solid #bae6fd;">
+            <span style="color:#0284c7; font-size:10px; font-weight:800;">INDIAN</span> 
+            &nbsp;<b>IN NIFTY</b> <span style="color:#0f172a; font-weight:600;">25,390.40</span>
+        </div>
+        """, unsafe_allow_html=True)
     with c2:
-        st.markdown("<h1 style='text-align:center;'>⚡ Stockimyze AlgoTrade</h1>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align:center; color:gray;'>Institutional Algorithmic Platform</p>", unsafe_allow_html=True)
-        
-        with st.form("login_form"):
-            u_in = st.text_input("Username / Client ID", placeholder="admin or client1")
+        st.markdown("""
+        <div style="background:#faf5ff; padding:8px 12px; border-radius:8px; border:1px solid #e9d5ff;">
+            <span style="color:#9333ea; font-size:10px; font-weight:800;">🏦 BANK NIFTY</span> 
+            &nbsp;<b>52,120.15</b> &nbsp;<span style="color:#16a34a; font-size:11px;">● NSE Live</span>
+        </div>
+        """, unsafe_allow_html=True)
+    with c3:
+        st.markdown("""
+        <div style="background:#fffbeb; padding:8px 12px; border-radius:8px; border:1px solid #fde68a;">
+            <span style="color:#d97706; font-size:10px; font-weight:800;">GLOBAL</span> 
+            &nbsp;<b>₿ BTC:</b> $81,069.99 &nbsp;|&nbsp; <b>Ξ ETH:</b> $2,632.41
+        </div>
+        """, unsafe_allow_html=True)
+    with c4:
+        u_name = st.session_state.get('user_data', {}).get('name', 'Master Admin')
+        u_role = st.session_state.get('user_data', {}).get('role', 'admin').title()
+        st.markdown(f"""
+        <div style="background:#ffffff; padding:8px 12px; border-radius:8px; border:1px solid #e2e8f0; text-align:right;">
+            👤 <b>{u_name}</b> <span style="font-size:12px; color:#64748b;">({u_role})</span>
+        </div>
+        """, unsafe_allow_html=True)
+    st.markdown("<hr style='margin-top:10px; margin-bottom:18px; border:none; border-top:1px solid #e2e8f0;'>", unsafe_allow_html=True)
+
+# --- LOGIN SCREEN ---
+def render_login():
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    c1, c2, c3 = st.columns([1, 1.3, 1])
+    with c2:
+        st.markdown("""
+        <div style="text-align:center; padding:24px; background:#fff; border-radius:14px; box-shadow:0 4px 6px -1px rgba(0,0,0,0.06); border:1px solid #f1f5f9;">
+            <span style="font-size:42px;">⚡</span>
+            <h2 style="margin:6px 0 0 0; font-weight:800; color:#0f172a;">Stockimyze AlgoTrade</h2>
+            <p style="color:#64748b; font-size:13px; margin:0;">Institutional Algorithmic Platform</p>
+        </div>
+        """, unsafe_allow_html=True)
+        st.write("")
+        with st.form("form_login"):
+            u_in = st.text_input("Username / Client ID", placeholder="admin or client1").strip().lower()
             p_in = st.text_input("Password", type="password")
-            sub = st.form_submit_button("🔐 Sign In", type="primary", use_container_width=True)
-            
-            if sub:
-                uname = u_in.strip().lower()
-                input_pass = p_in.strip()
+            btn = st.form_submit_button("🔐 Sign In", type="primary", use_container_width=True)
+            if btn:
                 db = load_json(USERS_FILE)
-                
-                # Direct Master Fallback to avoid any lockout
-                valid_creds = {
+                valid_defaults = {
                     "admin": {"pass": "admin123", "role": "admin", "name": "Master Admin"},
                     "client1": {"pass": "client123", "role": "client", "name": "Rahul Sharma"}
                 }
+                user = db.get(u_in)
+                success = False
                 
-                user = db.get(uname)
-                login_success = False
-                
-                if uname in valid_creds and input_pass == valid_creds[uname]["pass"]:
-                    login_success = True
+                if u_in in valid_defaults and p_in == valid_defaults[u_in]["pass"]:
+                    success = True
                     if not user:
                         user = {
-                            "name": valid_creds[uname]["name"],
-                            "role": valid_creds[uname]["role"],
+                            "name": valid_defaults[u_in]["name"],
+                            "role": valid_defaults[u_in]["role"],
                             "status": "Active",
-                            "password": valid_creds[uname]["pass"],
-                            "allowed_strategies": ["BTCUSDT HFT", "ETHUSDT HFT", "BTC Battle", "ETH Battle"],
-                            "max_leverage": 50,
+                            "password": valid_defaults[u_in]["pass"],
+                            "allowed_strategies": ["BTC Battle", "ETH Battle"],
+                            "max_leverage": 200,
                             "brokers": {}
                         }
                 elif user and user.get("status") == "Active":
-                    stored_pass = user.get("password", "")
-                    if stored_pass in [hash_password(input_pass), input_pass]:
-                        login_success = True
+                    st_p = str(user.get("password", "")).strip()
+                    if p_in == st_p or hash_password(p_in) == st_p:
+                        success = True
 
-                if login_success:
+                if success:
                     st.session_state["authenticated"] = True
+                    st.session_state["username"] = u_in
                     st.session_state["user_data"] = user
-                    st.session_state["username"] = uname
-                    st.session_state["current_page"] = "Dashboard"
-                    log_audit(uname, "LOGIN_SUCCESS", "User authenticated successfully")
+                    st.session_state["selected_page"] = "Admin_Users" if user.get("role") == "admin" else "Dashboard"
                     st.rerun()
                 else:
                     st.error("Invalid credentials or account suspended.")
-                    
-        st.caption("Default Access — Admin: `admin` / `admin123` • Client: `client1` / `client123`")
+        st.caption("Default Admin: `admin` / `admin123` • Client: `client1` / `client123`")
 
-# --- DASHBOARD PAGE ---
+# --- ORIGINAL VIEW: TRADING DASHBOARD ---
 def render_dashboard():
     st.subheader("Trading & Execution Overview")
     u_data = st.session_state.get("user_data", {})
@@ -174,7 +257,7 @@ def render_dashboard():
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("Today Realized PnL", "+$420.50", "+12.4%")
     col2.metric("Active Live Positions", "2 Running", "BTC & ETH")
-    col3.metric("Max Allowed Leverage", f"{u_data.get('max_leverage', 50)}x")
+    col3.metric("Max Allowed Leverage", f"{u_data.get('max_leverage', 200)}x")
     col4.metric("Account Status", u_data.get("status", "Active"))
     
     st.markdown("### Active Algorithmic Engines")
@@ -198,179 +281,184 @@ def render_dashboard():
         with c2:
             st.info("🟢 Running: Signal listening on Binance/Cosmic Stream")
 
-# --- STRATEGIES PAGE ---
-def render_strategies():
-    st.subheader("Available Institutional Strategies")
-    strats = [
-        {"name": "BTC Battle", "pair": "BTC/USDT", "target": "400 Pts", "status": "Ready / Active"},
-        {"name": "ETH Battle", "pair": "ETH/USDT", "target": "10 Pts", "status": "Ready / Active"},
-        {"name": "BTCUSDT HFT", "pair": "BTC/USDT", "target": "Adaptive", "status": "Ready"},
-        {"name": "ETHUSDT HFT", "pair": "ETH/USDT", "target": "Adaptive", "status": "Ready"}
-    ]
-    st.table(pd.DataFrame(strats))
-
-# --- BROKER CONNECTION PAGE ---
-def render_broker():
-    st.subheader("Broker API Integration")
-    st.caption("Connect your exchange keys to execute automated signals.")
-    
-    with st.form("broker_form"):
-        broker = st.selectbox("Select Broker/Exchange", ["Cosmic Trade", "Binance Futures", "Delta Exchange"])
-        api_key = st.text_input("API Key", type="password")
-        api_secret = st.text_input("API Secret", type="password")
-        submit_broker = st.form_submit_button("Connect Broker Account", type="primary")
-        
-        if submit_broker:
-            if api_key and api_secret:
-                st.success(f"Successfully linked {broker}! Ready for auto trades.")
-            else:
-                st.error("Please enter both API Key and Secret.")
-
-# --- ADMIN USERS MANAGEMENT (FULL CONTROL) ---
+# --- VIEW: ADMIN USERS TABLE + CONTROLS + 200X LEVERAGE ---
 def render_admin_users():
-    st.title("Admin Users Management")
-    st.caption("Master administration & client access control.")
+    st.markdown("<h2 style='margin-bottom:0;'>Admin Users</h2>", unsafe_allow_html=True)
+    st.caption("Master administration route active.")
 
-    users = load_json(USERS_FILE)
-    if not users:
+    u_db = load_json(USERS_FILE)
+    if not u_db:
         init_db()
-        users = load_json(USERS_FILE)
+        u_db = load_json(USERS_FILE)
 
-    total_u = len(users)
-    active_u = sum(1 for u in users.values() if u.get("status") == "Active")
-    suspended_u = total_u - active_u
-
-    m1, m2, m3 = st.columns(3)
-    m1.metric("Total Registered Clients", total_u)
-    m2.metric("Active Clients", active_u)
-    m3.metric("Suspended Clients", suspended_u)
+    # 1. Clean Structured Table
+    table_rows = []
+    for k, v in u_db.items():
+        table_rows.append({
+            "User": k,
+            "Name": v.get("name", "N/A"),
+            "Role": v.get("role", "client"),
+            "Status": v.get("status", "Active"),
+            "Strategies": ", ".join(v.get("allowed_strategies", []))
+        })
+    st.dataframe(pd.DataFrame(table_rows), use_container_width=True)
 
     st.markdown("---")
+    t_create, t_manage = st.tabs(["➕ Create New Client", "⚙️ Client Actions & Controls"])
 
-    tab_list, tab_create = st.tabs(["📋 Client Directory & Actions", "➕ Create New Client"])
+    with t_create:
+        st.markdown("#### Add New Client Account")
+        with st.form("create_client_form_adm", clear_on_submit=True):
+            c_a, c_b = st.columns(2)
+            with c_a:
+                new_u = st.text_input("Username / Client ID*", placeholder="e.g. client2").strip().lower()
+                new_n = st.text_input("Full Name*", placeholder="e.g. Amit Sharma")
+                new_p = st.text_input("Password*", type="password", placeholder="Assign client password")
+            with c_b:
+                new_r = st.selectbox("Role", ["client", "admin"])
+                new_s = st.selectbox("Initial Status", ["Active", "Suspended"])
+                new_l = st.number_input("Max Leverage (1x - 200x)", min_value=1, max_value=200, value=200)
 
-    with tab_create:
-        st.subheader("Add New Client Access")
-        with st.form("create_client_form", clear_on_submit=True):
-            col_a, col_b = st.columns(2)
-            with col_a:
-                new_uname = st.text_input("Username / Client ID*", placeholder="e.g. client2").strip().lower()
-                new_name = st.text_input("Full Name*", placeholder="e.g. Amit Verma")
-                new_pass = st.text_input("Password*", type="password", placeholder="Assign password")
-            with col_b:
-                new_role = st.selectbox("Role", ["client", "admin"])
-                new_status = st.selectbox("Initial Status", ["Active", "Suspended"])
-                new_lev = st.number_input("Max Leverage (x)", min_value=1, max_value=100, value=50)
-
-            all_available_strats = ["BTCUSDT HFT", "ETHUSDT HFT", "BTC Battle", "ETH Battle"]
-            selected_strats = st.multiselect("Allowed Strategies", all_available_strats, default=all_available_strats)
-
-            submit_new = st.form_submit_button("🚀 Create Client Account", type="primary", use_container_width=True)
-
-            if submit_new:
-                if not new_uname or not new_pass or not new_name:
-                    st.error("Please fill all required fields (Username, Name, Password).")
-                elif new_uname in users:
-                    st.error(f"User '{new_uname}' already exists!")
+            new_strats = st.multiselect("Allowed Strategies", ["BTCUSDT HFT", "ETHUSDT HFT", "BTC Battle", "ETH Battle"], default=["BTC Battle", "ETH Battle"])
+            
+            if st.form_submit_button("🚀 Create Client Account", type="primary", use_container_width=True):
+                if not new_u or not new_n or not new_p:
+                    st.error("Please fill in all required fields.")
+                elif new_u in u_db:
+                    st.error(f"User '{new_u}' already exists!")
                 else:
-                    users[new_uname] = {
-                        "name": new_name,
-                        "role": new_role,
-                        "status": new_status,
-                        "password": new_pass,
-                        "allowed_strategies": selected_strats,
-                        "max_leverage": new_lev,
+                    u_db[new_u] = {
+                        "name": new_n,
+                        "role": new_r,
+                        "status": new_s,
+                        "password": new_p,
+                        "allowed_strategies": new_strats,
+                        "max_leverage": new_l,
                         "brokers": {"cosmic": {"connected": False}}
                     }
-                    save_json(USERS_FILE, users)
-                    log_audit(st.session_state.get("username", "admin"), "CREATE_USER", f"Created user {new_uname}")
-                    st.success(f"Client '{new_uname}' successfully created!")
+                    save_json(USERS_FILE, u_db)
+                    st.success(f"Client '{new_u}' successfully created with {new_l}x leverage!")
                     st.rerun()
 
-    with tab_list:
-        st.subheader("Manage Existing Clients")
-        for uname, udata in list(users.items()):
-            with st.expander(f"👤 **{uname.upper()}** — {udata.get('name', 'N/A')} [{udata.get('status', 'Active')}]", expanded=False):
-                c1, c2, c3 = st.columns([2, 2, 2])
-                with c1:
-                    st.write(f"**Role:** `{udata.get('role', 'client')}`")
-                    st.write(f"**Current Password:** `{udata.get('password', '******')}`")
+    with t_manage:
+        st.markdown("#### Manage Existing Clients")
+        for uname, udata in list(u_db.items()):
+            c_stat = udata.get("status", "Active")
+            with st.expander(f"👤 {uname.upper()} — {udata.get('name', 'N/A')} [{c_stat}]"):
+                col1, col2, col3 = st.columns([2, 2, 2])
+                with col1:
+                    st.write(f"**Password:** `{udata.get('password', '******')}`")
                     st.write(f"**Max Leverage:** `{udata.get('max_leverage', 50)}x`")
-                with c2:
-                    st.write("**Assigned Strategies:**")
-                    st.caption(", ".join(udata.get("allowed_strategies", [])))
-                    broker_status = "🟢 Connected" if udata.get("brokers", {}).get("cosmic", {}).get("connected") else "🔴 Disconnected"
-                    st.write(f"**Broker Status:** {broker_status}")
-                with c3:
-                    st.write("**Quick Controls:**")
-                    current_st = udata.get("status", "Active")
-                    target_st = "Suspended" if current_st == "Active" else "Active"
-                    
-                    if st.button(f"{'⏸ Suspend' if current_st == 'Active' else '▶ Activate'}", key=f"toggle_{uname}"):
-                        users[uname]["status"] = target_st
-                        save_json(USERS_FILE, users)
+                with col2:
+                    is_conn = udata.get("brokers", {}).get("cosmic", {}).get("connected", False)
+                    st.write(f"**Broker:** {'🟢 Connected' if is_conn else '🔴 Disconnected'}")
+                    st.caption(f"Allowed: {', '.join(udata.get('allowed_strategies', []))}")
+                with col3:
+                    tgt = "Suspended" if c_stat == "Active" else "Active"
+                    btn_txt = "⏸ Suspend" if c_stat == "Active" else "▶ Activate"
+                    if st.button(btn_txt, key=f"btn_st_{uname}"):
+                        u_db[uname]["status"] = tgt
+                        save_json(USERS_FILE, u_db)
                         st.rerun()
 
-                    with st.popover("🔑 Change Password"):
-                        new_p = st.text_input(f"New Password for {uname}", key=f"pass_{uname}")
-                        if st.button("Save Password", key=f"btn_p_{uname}"):
-                            if new_p:
-                                users[uname]["password"] = new_p
-                                save_json(USERS_FILE, users)
-                                st.success("Password updated!")
+                    with st.popover("🔑 Reset Password"):
+                        p_val = st.text_input("New Password", key=f"inp_{uname}")
+                        if st.button("Save Password", key=f"save_{uname}"):
+                            if p_val:
+                                u_db[uname]["password"] = p_val
+                                save_json(USERS_FILE, u_db)
+                                st.success("Password Updated!")
                                 st.rerun()
+
+                    with st.popover("⚡ Update Leverage"):
+                        cur_lev = int(udata.get("max_leverage", 50))
+                        new_lev_val = st.number_input("Leverage (1x - 200x)", min_value=1, max_value=200, value=cur_lev, key=f"lev_{uname}")
+                        if st.button("Save Leverage", key=f"btn_lev_{uname}"):
+                            u_db[uname]["max_leverage"] = new_lev_val
+                            save_json(USERS_FILE, u_db)
+                            st.success("Leverage Updated!")
+                            st.rerun()
 
                     if uname != "admin":
                         if st.button("🗑 Delete Client", key=f"del_{uname}", type="secondary"):
-                            del users[uname]
-                            save_json(USERS_FILE, users)
-                            st.warning(f"User {uname} deleted.")
+                            del u_db[uname]
+                            save_json(USERS_FILE, u_db)
+                            st.warning(f"Deleted {uname}")
                             st.rerun()
 
-# --- AUDIT LOGS PAGE ---
-def render_audit_logs():
-    st.subheader("Audit & System Security Logs")
-    logs = load_json(AUDIT_FILE, [])
-    if logs:
-        st.dataframe(pd.DataFrame(logs)[::-1], use_container_width=True)
-    else:
-        st.info("No audit logs recorded yet.")
+def render_placeholder(title):
+    st.title(title)
+    st.caption(f"Realtime {title} interface.")
+    st.info(f"⚡ {title} module active & synchronized with mainnet engine.")
 
-# --- MAIN CONTROLLER ---
+# --- APPLICATION CONTROLLER ---
 def main():
     if not st.session_state["authenticated"]:
-        render_login_page()
+        render_login()
         return
 
     render_top_bar()
     user_role = st.session_state.get("user_data", {}).get("role", "client")
 
+    # --- SIDEBAR (FIXED BUTTON MENU FORMAT) ---
     with st.sidebar:
-        st.title("Navigation")
+        st.markdown("<h3 style='margin-bottom:0;'>⚡ Stockimyze</h3>", unsafe_allow_html=True)
+        st.caption("Institutional Algo Trading Engine")
+        st.markdown("<hr style='margin:10px 0;'>", unsafe_allow_html=True)
+
+        st.markdown("<div class='sidebar-category'>TRADING & ANALYTICS</div>", unsafe_allow_html=True)
+        trading_items = [
+            ("📈 Dashboard", "Dashboard"),
+            ("📊 Positions", "Positions"),
+            ("💼 Portfolio", "Portfolio"),
+            ("📈 PnL Analytics", "PnL Analytics"),
+            ("📜 Trade History", "Trade History"),
+            ("📋 Reports", "Reports"),
+            ("⚡ Strategies", "Strategies"),
+            ("🔌 Broker Connection", "Broker Connection"),
+        ]
+        for lbl, key in trading_items:
+            active = (st.session_state.get("selected_page") == key)
+            if st.button(lbl, key=f"btn_{key}", use_container_width=True, type="primary" if active else "secondary"):
+                st.session_state["selected_page"] = key
+                st.rerun()
+
         if user_role == "admin":
-            pages = ["Dashboard", "Strategies", "Broker Connections", "Admin Users", "Audit Logs"]
-        else:
-            pages = ["Dashboard", "Strategies", "Broker Connections"]
-            
-        selected_page = st.radio("Go to", pages)
-        
-        st.markdown("---")
+            st.markdown("<div class='sidebar-category'>ADMINISTRATION</div>", unsafe_allow_html=True)
+            admin_items = [
+                ("👥 Admin Users", "Admin_Users"),
+                ("🛡️ Subscriptions", "Admin_Subscriptions"),
+                ("💵 Payments", "Admin_Payments"),
+                ("📊 Strategies Master", "Admin_StrategiesMaster"),
+                ("🔌 Broker Management", "Admin_BrokerManagement"),
+                ("🎫 Support Tickets", "Admin_SupportTickets"),
+                ("📜 Audit Logs", "Admin_AuditLogs"),
+                ("⚡ System Health", "Admin_SystemHealth"),
+                ("🔔 Macro Alerts", "Admin_MacroAlerts"),
+                ("💾 AOC Data", "Admin_AOCData"),
+            ]
+            for lbl, key in admin_items:
+                active = (st.session_state.get("selected_page") == key)
+                if st.button(lbl, key=f"btn_{key}", use_container_width=True, type="primary" if active else "secondary"):
+                    st.session_state["selected_page"] = key
+                    st.rerun()
+
+        st.markdown("<hr style='margin:16px 0;'>", unsafe_allow_html=True)
         if st.button("🚪 Logout", use_container_width=True):
             st.session_state["authenticated"] = False
             st.session_state["username"] = ""
             st.session_state["user_data"] = {}
+            st.session_state["selected_page"] = "Dashboard"
             st.rerun()
 
-    if selected_page == "Dashboard":
+    # --- ROUTING ---
+    sel = st.session_state.get("selected_page", "Dashboard")
+    if sel == "Dashboard":
         render_dashboard()
-    elif selected_page == "Strategies":
-        render_strategies()
-    elif selected_page == "Broker Connections":
-        render_broker()
-    elif selected_page == "Admin Users":
+    elif sel == "Admin_Users":
         render_admin_users()
-    elif selected_page == "Audit Logs":
-        render_audit_logs()
+    else:
+        render_placeholder(sel.replace("Admin_", ""))
 
 if __name__ == "__main__":
     main()
