@@ -78,7 +78,7 @@ def init_db():
                 "role": "admin",
                 "status": "Active",
                 "password": "admin123",
-                "allowed_strategies": ["BTC Battle", "ETH Battle", "BTCUSDT HFT", "ETHUSDT HFT"],
+                "allowed_strategies": ["Sniper Trader (Lux SMC)", "BTC Battle", "ETH Battle", "BTCUSDT HFT", "ETHUSDT HFT"],
                 "max_leverage": 200,
                 "brokers": {}
             },
@@ -87,7 +87,7 @@ def init_db():
                 "role": "client",
                 "status": "Active",
                 "password": "client123",
-                "allowed_strategies": ["BTC Battle", "ETH Battle"],
+                "allowed_strategies": ["Sniper Trader (Lux SMC)", "BTC Battle", "ETH Battle"],
                 "max_leverage": 50,
                 "brokers": {}
             }
@@ -106,7 +106,7 @@ if "user_data" not in st.session_state:
 if "selected_page" not in st.session_state:
     st.session_state["selected_page"] = "Dashboard"
 
-# --- LIVE MARKET DATA CACHE (FAST FETCH) ---
+# --- LIVE MARKET DATA CACHE ---
 @st.cache_data(ttl=10)
 def get_live_market_data():
     data = {
@@ -240,7 +240,7 @@ def render_login():
                             "role": valid_defaults[u_in]["role"],
                             "status": "Active",
                             "password": valid_defaults[u_in]["pass"],
-                            "allowed_strategies": ["BTC Battle", "ETH Battle"],
+                            "allowed_strategies": ["Sniper Trader (Lux SMC)", "BTC Battle", "ETH Battle"],
                             "max_leverage": 200,
                             "brokers": {}
                         }
@@ -263,13 +263,27 @@ def render_dashboard():
     st.subheader("Trading & Execution Overview")
     u_data = st.session_state.get("user_data", {})
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Today Realized PnL", "+$420.50", "+12.4%")
-    col2.metric("Active Live Positions", "2 Running", "BTC & ETH")
+    col1.metric("Today Realized PnL", "+$584.20", "+14.8%")
+    col2.metric("Active Live Positions", "3 Running", "Sniper (ETH), BTC, ETH")
     col3.metric("Max Allowed Leverage", f"{u_data.get('max_leverage', 200)}x")
     col4.metric("Account Status", u_data.get("status", "Active"))
     
-    st.markdown("### Algorithmic Battle Bots Overview")
-    t1, t2 = st.tabs(["🚀 BTC Battle (400 Pts Target)", "⚡ ETH Battle (10 Pts Target)"])
+    st.markdown("### Algorithmic Battle & Sniper Engines")
+    t0, t1, t2 = st.tabs([
+        "🎯 Sniper Trader (Lux SMC 5M)",
+        "🚀 BTC Battle (400 Pts Target)", 
+        "⚡ ETH Battle (10 Pts Target)"
+    ])
+    
+    with t0:
+        st.write("**Strategy:** Lux SMC Liquidity Sweep & Order Block Execution (ETH/USDT 5M)")
+        st.write("**Demand Zone:** $2,580 - $2,595 | **Supply Zone:** $2,648 - $2,654 | **RRR:** 1:3.8")
+        c1, c2 = st.columns(2)
+        with c1:
+            st.toggle("Auto-Pilot Execution (Sniper Trader)", value=True, key="sniper_bot_toggle_dash")
+        with c2:
+            st.info("🟢 Monitoring: CHoCH Confirmed • Waiting for Demand Zone Tap")
+
     with t1:
         st.write("**Strategy:** BTCUSDT Momentum Breakout 1-Min HFT")
         st.write("**Target:** 400 Points | **Stoploss:** 200 Points")
@@ -277,7 +291,8 @@ def render_dashboard():
         with c1:
             st.toggle("Auto-Pilot Execution (BTC)", value=True, key="btc_bot_toggle_dash")
         with c2:
-            st.info("🟢 Running: Signal listening on Binance/Shark/Cosmic Stream")
+            st.info("🟢 Running: Signal listening on Shark/Binance/Cosmic Stream")
+
     with t2:
         st.write("**Strategy:** ETHUSDT Scalp Micro-Wave")
         st.write("**Target:** 10 Points | **Stoploss:** 6 Points")
@@ -285,9 +300,9 @@ def render_dashboard():
         with c1:
             st.toggle("Auto-Pilot Execution (ETH)", value=True, key="eth_bot_toggle_dash")
         with c2:
-            st.info("🟢 Running: Signal listening on Binance/Shark/Cosmic Stream")
+            st.info("🟢 Running: Signal listening on Shark/Binance/Cosmic Stream")
 
-# --- PERMANENT STRATEGIES PAGE ---
+# --- PERMANENT STRATEGIES PAGE (WITH SNIPER TRADER) ---
 def render_strategies_page():
     st.title("⚡ Algorithmic Trading Strategies")
     st.caption("Configure, activate, and manage institutional trading engines.")
@@ -296,6 +311,7 @@ def render_strategies_page():
     user_lev = u_data.get("max_leverage", 200)
 
     strat_tabs = st.tabs([
+        "🎯 Sniper Trader (Lux SMC)",
         "🔥 BTC Battle (400 Pts)", 
         "⚡ ETH Battle (10 Pts)", 
         "🏎️ BTCUSDT HFT", 
@@ -303,7 +319,61 @@ def render_strategies_page():
         "📊 Active Strategy Deployments"
     ])
 
+    # NEW: SNIPER TRADER ENGINE TAB
     with strat_tabs[0]:
+        st.markdown("### 🎯 Sniper Trader — Lux SMC Liquidity & Order Block Engine")
+        st.caption("High-probability institutional model utilizing Liquidity Grab, CHoCH confirmation, and FVG mitigation.")
+        
+        c_p1, c_p2, c_p3 = st.columns(3)
+        with c_p1:
+            st.markdown("""
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:12px; border-radius:8px;">
+                <div style="font-size:11px; color:#64748b; font-weight:700;">DEMAND ZONE (LONG)</div>
+                <div style="font-size:16px; font-weight:800; color:#0f172a;">$2,580.00 – $2,595.00</div>
+                <div style="font-size:11px; color:#10b981;">Target: $2,648.00 (R1 Supply)</div>
+            </div>
+            """, unsafe_allow_html=True)
+        with c_p2:
+            st.markdown("""
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:12px; border-radius:8px;">
+                <div style="font-size:11px; color:#64748b; font-weight:700;">SUPPLY ZONE (SHORT)</div>
+                <div style="font-size:16px; font-weight:800; color:#0f172a;">$2,648.00 – $2,654.00</div>
+                <div style="font-size:11px; color:#ef4444;">Target: $2,605.00 (FVG Fill)</div>
+            </div>
+            """, unsafe_allow_html=True)
+        with c_p3:
+            st.markdown("""
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:12px; border-radius:8px;">
+                <div style="font-size:11px; color:#64748b; font-weight:700;">RISK REWARD RATIO</div>
+                <div style="font-size:16px; font-weight:800; color:#2563eb;">1 : 3.8 Minimum</div>
+                <div style="font-size:11px; color:#64748b;">Stop Loss: 8 - 10 Points Fixed</div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        st.write("")
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            sniper_tf = st.selectbox("Execution Timeframe", ["5-Minute (Recommended)", "1-Minute Scalp", "15-Minute Swing"], key="snp_tf")
+            sniper_mode = st.selectbox("Trading Bias", ["Both (Long Demand & Short Supply)", "Only Long (Order Blocks)", "Only Short (Supply Grab)"], key="snp_bias")
+        with c2:
+            sniper_sl = st.number_input("Max Stop Loss (Points)", min_value=3, max_value=25, value=8, step=1, key="snp_sl")
+            sniper_tp = st.number_input("Take Profit Target (Points)", min_value=15, max_value=100, value=38, step=1, key="snp_tp")
+        with c3:
+            sniper_lev = st.slider("Sniper Leverage", min_value=1, max_value=int(user_lev), value=min(50, int(user_lev)), key="snp_lev")
+            sniper_broker = st.selectbox("Routing Broker", ["Shark Exchange API", "Cosmic Mainnet API", "Binance Futures Feed", "Paper Trading Simulation"], key="snp_route")
+
+        st.write("")
+        c_act1, c_act2 = st.columns([2, 2])
+        with c_act1:
+            sniper_active = st.toggle("Activate Sniper Trader Auto-Execution", value=True, key="snp_toggle")
+            if sniper_active:
+                st.success(f"● Sniper Engine Online | Routing: {sniper_broker} | SL: {sniper_sl} pts | TP: {sniper_tp} pts | Lev: {sniper_lev}x")
+            else:
+                st.warning("Sniper Engine Standby.")
+        with c_act2:
+            st.info("⚡ Live Lux SMC Webhook listening for liquidity sweeps & OB taps on 5M timeframe.")
+
+    with strat_tabs[1]:
         st.markdown("### 🚀 BTC Battle Strategy Engine")
         st.caption("Automated high-frequency target-seeking engine for BTCUSDT.")
         c1, c2, c3 = st.columns(3)
@@ -325,7 +395,7 @@ def render_strategies_page():
         with c_act2:
             st.selectbox("Execution Broker Routing", ["Shark Exchange API", "Cosmic Mainnet API", "Binance Futures Feed", "Paper Trading Simulation"], key="btc_route")
 
-    with strat_tabs[1]:
+    with strat_tabs[2]:
         st.markdown("### ⚡ ETH Battle Strategy Engine")
         st.caption("Micro-wave scalp momentum bot for ETHUSDT perpetuals.")
         e1, e2, e3 = st.columns(3)
@@ -347,7 +417,7 @@ def render_strategies_page():
         with e_act2:
             st.selectbox("Execution Broker Routing", ["Shark Exchange API", "Cosmic Mainnet API", "Binance Futures Feed", "Paper Trading Simulation"], key="eth_route")
 
-    with strat_tabs[2]:
+    with strat_tabs[3]:
         st.markdown("### 🏎️ BTCUSDT High Frequency Engine (HFT)")
         st.write("Order-book imbalance and delta-volume burst detection engine.")
         h1, h2 = st.columns(2)
@@ -357,7 +427,7 @@ def render_strategies_page():
         with h2:
             st.info("HFT Engine listening for liquidity spikes > $1.5M")
 
-    with strat_tabs[3]:
+    with strat_tabs[4]:
         st.markdown("### 🌊 ETHUSDT High Frequency Engine (HFT)")
         st.write("Cross-market funding-arbitrage and tick-level scalp module.")
         eh1, eh2 = st.columns(2)
@@ -367,9 +437,10 @@ def render_strategies_page():
         with eh2:
             st.info("HFT Engine monitoring 500ms orderbook depth.")
 
-    with strat_tabs[4]:
+    with strat_tabs[5]:
         st.markdown("### 📊 Active Live Positions Summary")
         active_pos_data = [
+            {"Strategy": "Sniper Trader (Lux SMC)", "Symbol": "ETHUSDT", "Type": "LONG (LIMIT)", "Entry Price": "$2,592.50", "Current Price": "$2,632.41", "PnL": "+$39.91", "Target": "$2,648.00 (Supply)", "Status": "IN_POSITION"},
             {"Strategy": "BTC Battle", "Symbol": "BTCUSDT", "Type": "LONG", "Entry Price": "$80,820.00", "Current Price": "$81,069.99", "PnL": "+$249.99", "Target": "+400 Pts", "Status": "RUNNING"},
             {"Strategy": "ETH Battle", "Symbol": "ETHUSDT", "Type": "SHORT", "Entry Price": "$2,641.50", "Current Price": "$2,632.41", "PnL": "+$9.09", "Target": "+10 Pts", "Status": "RUNNING"}
         ]
@@ -508,7 +579,11 @@ def render_admin_users():
                 new_s = st.selectbox("Initial Status", ["Active", "Suspended"])
                 new_l = st.number_input("Max Leverage (1x - 200x)", min_value=1, max_value=200, value=200)
 
-            new_strats = st.multiselect("Allowed Strategies", ["BTC Battle", "ETH Battle", "BTCUSDT HFT", "ETHUSDT HFT"], default=["BTC Battle", "ETH Battle"])
+            new_strats = st.multiselect(
+                "Allowed Strategies", 
+                ["Sniper Trader (Lux SMC)", "BTC Battle", "ETH Battle", "BTCUSDT HFT", "ETHUSDT HFT"], 
+                default=["Sniper Trader (Lux SMC)", "BTC Battle", "ETH Battle"]
+            )
             
             if st.form_submit_button("🚀 Create Client Account", type="primary", use_container_width=True):
                 if not new_u or not new_n or not new_p:
