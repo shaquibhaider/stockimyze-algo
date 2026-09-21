@@ -295,13 +295,13 @@ def render_dashboard():
     
     st.markdown("### Algorithmic Battle & Sniper Engines")
     t0, t1, t2 = st.tabs([
-        "🎯 Stockimyze Sniper (Lux SMC)",
+        "🎯 Stockimyze Sniper",
         "🚀 BTC Battle (400 Pts Target)", 
         "⚡ ETH Battle (10 Pts Target)"
     ])
     
     with t0:
-        st.write("**Strategy:** Stockimyze Sniper — Lux SMC Dual Liquidity Engine with Flexible Pricing & 200x Leverage")
+        st.write("**Strategy:** Stockimyze Sniper")
         st.write("**Status:** Fully Configurable by Client / Admin")
         c1, c2 = st.columns(2)
         with c1:
@@ -329,7 +329,7 @@ def render_dashboard():
 
 # --- STRATEGIES PAGE (STOCKIMYZE SNIPER) ---
 def render_strategies_page():
-    st.title("⚡ Algorithmic Trading Strategies")
+    st.markdown("### 🎯 Stockimyze Sniper")
     st.caption("Customize exact target price, stop-loss price, and leverage scaling up to 200x.")
 
     u_data = st.session_state.get("user_data", {})
@@ -346,7 +346,7 @@ def render_strategies_page():
 
     # 1. STOCKIMYZE SNIPER TAB
     with strat_tabs[0]:
-        st.markdown("### 🎯 Stockimyze Sniper — Lux SMC Flexible Pricing & 200x Leverage Engine")
+        st.markdown("### 🎯 Stockimyze Sniper")
         st.caption("Customize exact target price, stop-loss price, and leverage scaling up to 200x.")
         
         pair_choice = st.radio("Select Asset Configuration:", ["Ethereum (ETHUSDT)", "Bitcoin (BTCUSDT)"], horizontal=True)
