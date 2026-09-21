@@ -80,7 +80,7 @@ def init_db():
                 "role": "admin",
                 "status": "Active",
                 "password": "admin123",
-                "allowed_strategies": ["Sniper Trader (Lux SMC)", "BTC Battle", "ETH Battle", "BTCUSDT HFT", "ETHUSDT HFT"],
+                "allowed_strategies": ["Stockimyze Sniper", "BTC Battle", "ETH Battle", "BTCUSDT HFT", "ETHUSDT HFT"],
                 "max_leverage": 200,
                 "brokers": {}
             },
@@ -89,7 +89,7 @@ def init_db():
                 "role": "client",
                 "status": "Active",
                 "password": "client123",
-                "allowed_strategies": ["Sniper Trader (Lux SMC)", "BTC Battle", "ETH Battle"],
+                "allowed_strategies": ["Stockimyze Sniper", "BTC Battle", "ETH Battle"],
                 "max_leverage": 200,
                 "brokers": {}
             }
@@ -146,29 +146,30 @@ def get_live_market_data():
         pass
     return data
 
-# --- FLEXIBLE BRACKET EXECUTION WITH 200X LEVERAGE ---
-def execute_flexible_bracket_order(symbol, direction, entry_price, custom_sl_price, custom_tp_price, leverage, broker_name):
+# --- EXECUTION ENGINE ---
+def execute_stockimyze_sniper_order(symbol, direction, tp_price, sl_price, leverage, broker_name):
     order_payload = {
-        "order_id": f"FLEX-{int(time.time())}",
+        "order_id": f"SNP-{int(time.time())}",
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "strategy": "Sniper Trader (Lux SMC)",
+        "strategy": "Stockimyze Sniper",
         "symbol": symbol,
-        "type": f"{direction} ({leverage}x)",
-        "entry_price": f"${entry_price:,.2f}",
-        "sl_price": f"${custom_sl_price:,.2f}",
-        "tp_price": f"${custom_tp_price:,.2f}",
+        "type": direction,
+        "entry_price": f"${get_live_market_data()['eth']['raw'] if 'ETH' in symbol else get_live_market_data()['btc']['raw']:,.2f}",
+        "sl_price": f"${sl_price:,.2f}",
+        "tp_price": f"${tp_price:,.2f}",
+        "leverage": f"{leverage}x",
         "broker": broker_name,
-        "status": "FLEX_BRACKET_ARMED",
+        "status": "BRACKET_ARMED",
         "pnl": "+$0.00"
     }
 
     positions = load_json(POSITIONS_FILE, [])
     positions.insert(0, order_payload)
     save_json(POSITIONS_FILE, positions)
-    log_audit(st.session_state.get("username", "admin"), "FLEX_ORDER_OPEN", f"{symbol} {direction} Lev:{leverage}x SL:{custom_sl_price} TP:{custom_tp_price}")
+    log_audit(st.session_state.get("username", "admin"), "STOCKIMYZE_SNIPER_OPEN", f"{symbol} {direction} Lev:{leverage}x TP:{tp_price} SL:{sl_price}")
     return order_payload
 
-# --- DUAL-LINE TOP BAR ---
+# --- TOP BAR ---
 def render_top_bar():
     m = get_live_market_data()
     u_name = st.session_state.get('user_data', {}).get('name', 'Master Admin')
@@ -223,9 +224,9 @@ def render_top_bar():
         <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:7px 12px; display:flex; align-items:center; justify-content:space-between; min-height:46px;">
             <div style="display:flex; align-items:center; gap:6px;">
                 <span style="height:8px; width:8px; border-radius:50%; background-color:#16a34a; display:inline-block;"></span>
-                <span style="font-size:11px; font-weight:700; color:#334155;">Flexible Engine</span>
+                <span style="font-size:11px; font-weight:700; color:#334155;">Stockimyze Sniper</span>
             </div>
-            <span style="font-size:11px; font-weight:800; color:#16a34a; background:#dcfce7; padding:2px 8px; border-radius:12px;">Up to 200x Active</span>
+            <span style="font-size:11px; font-weight:800; color:#16a34a; background:#dcfce7; padding:2px 8px; border-radius:12px;">200x Max Active</span>
         </div>
         """, unsafe_allow_html=True)
 
@@ -264,7 +265,7 @@ def render_login():
                             "role": valid_defaults[u_in]["role"],
                             "status": "Active",
                             "password": valid_defaults[u_in]["pass"],
-                            "allowed_strategies": ["Sniper Trader (Lux SMC)", "BTC Battle", "ETH Battle"],
+                            "allowed_strategies": ["Stockimyze Sniper", "BTC Battle", "ETH Battle"],
                             "max_leverage": 200,
                             "brokers": {}
                         }
@@ -287,26 +288,26 @@ def render_dashboard():
     st.subheader("Trading & Execution Overview")
     u_data = st.session_state.get("user_data", {})
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Today Realized PnL", "+$912.40", "+22.4%")
-    col2.metric("Active Live Positions", "4 Running", "Flexible SMC (BTC+ETH)")
-    col3.metric("Max Allowed Leverage", f"{u_data.get('max_leverage', 200)}x")
+    col1.metric("Today Realized PnL", "+$920.40", "+22.4%")
+    col2.metric("Active Live Positions", "4 Running", "Stockimyze Sniper, BTC, ETH")
+    col3.metric("Max Allowed Leverage", "200x (Unlocked)")
     col4.metric("Account Status", u_data.get("status", "Active"))
     
     st.markdown("### Algorithmic Battle & Sniper Engines")
     t0, t1, t2 = st.tabs([
-        "🎯 Sniper Trader (Flexible SL/TP & 200x)",
+        "🎯 Stockimyze Sniper (Lux SMC)",
         "🚀 BTC Battle (400 Pts Target)", 
         "⚡ ETH Battle (10 Pts Target)"
     ])
     
     with t0:
-        st.write("**Strategy:** Dual-Asset Lux SMC Liquidity Sweep with Custom Price Sliders and Up to 200x Leverage.")
-        st.write("**Status:** Fully flexible pricing active. Clients can drag SL, TP, and Leverage freely.")
+        st.write("**Strategy:** Stockimyze Sniper — Lux SMC Dual Liquidity Engine with Flexible Pricing & 200x Leverage")
+        st.write("**Status:** Fully Configurable by Client / Admin")
         c1, c2 = st.columns(2)
         with c1:
-            st.toggle("Auto-Pilot Execution (Sniper Trader)", value=True, key="sniper_bot_toggle_dash")
+            st.toggle("Auto-Pilot Execution (Stockimyze Sniper)", value=True, key="sniper_bot_toggle_dash")
         with c2:
-            st.info("🟢 Monitoring: Custom price brackets enabled for all connected accounts.")
+            st.info("🟢 Monitoring: Custom Target/SL & 200x leverage engine active.")
 
     with t1:
         st.write("**Strategy:** BTCUSDT Momentum Breakout 1-Min HFT")
@@ -326,17 +327,16 @@ def render_dashboard():
         with c2:
             st.info("🟢 Running: Signal listening on Shark/Binance/Cosmic Stream")
 
-# --- CLEAN STRATEGIES PAGE WITH FLEXIBLE SL/TP PRICES & 200X LEVERAGE ---
+# --- STRATEGIES PAGE (STOCKIMYZE SNIPER) ---
 def render_strategies_page():
     st.title("⚡ Algorithmic Trading Strategies")
-    st.caption("Configure custom Stop Loss prices, Take Profit prices, and leverage up to 200x.")
+    st.caption("Customize exact target price, stop-loss price, and leverage scaling up to 200x.")
 
     u_data = st.session_state.get("user_data", {})
-    max_user_lev = int(u_data.get("max_leverage", 200))
     m_data = get_live_market_data()
 
     strat_tabs = st.tabs([
-        "🎯 Sniper Trader (Flexible SL/TP & 200x)",
+        "🎯 Stockimyze Sniper",
         "🚀 BTC Battle (400 Pts)", 
         "⚡ ETH Battle (10 Pts)", 
         "🏎️ BTCUSDT HFT", 
@@ -344,9 +344,9 @@ def render_strategies_page():
         "📊 Active Live Positions"
     ])
 
-    # 1. SNIPER TRADER ENGINE TAB (WITH FLEXIBLE SL/TP PRICES & 200X LEVERAGE)
+    # 1. STOCKIMYZE SNIPER TAB
     with strat_tabs[0]:
-        st.markdown("### 🎯 Sniper Trader — Lux SMC Flexible Pricing & 200x Leverage Engine")
+        st.markdown("### 🎯 Stockimyze Sniper — Lux SMC Flexible Pricing & 200x Leverage Engine")
         st.caption("Customize exact target price, stop-loss price, and leverage scaling up to 200x.")
         
         pair_choice = st.radio("Select Asset Configuration:", ["Ethereum (ETHUSDT)", "Bitcoin (BTCUSDT)"], horizontal=True)
@@ -354,68 +354,56 @@ def render_strategies_page():
         if "ETH" in pair_choice:
             cur_p = m_data["eth"]["raw"]
             
-            # Flexible Inputs
             c1, c2, c3, c4 = st.columns(4)
             with c1:
-                snp_eth_dir = st.selectbox("Direction", ["LONG (Demand OB)", "SHORT (Supply Grab)"], key="f_eth_dir")
+                snp_eth_dir = st.selectbox("Direction", ["LONG (Demand OB)", "SHORT (Supply Grab)"], key="snp_eth_dir")
             with c2:
-                flex_eth_tp = st.number_input("Target Price (TP $)", min_value=100.0, max_value=10000.0, value=round(cur_p + 38.0, 2), step=0.5, key="f_eth_tp")
+                snp_eth_tp = st.number_input("Target Price (TP $)", min_value=100.0, max_value=10000.0, value=round(cur_p + 38.0, 2), step=1.0, key="snp_eth_tp")
             with c3:
-                flex_eth_sl = st.number_input("Stop Loss Price (SL $)", min_value=100.0, max_value=10000.0, value=round(cur_p - 8.0, 2), step=0.5, key="f_eth_sl")
+                snp_eth_sl = st.number_input("Stop Loss Price (SL $)", min_value=50.0, max_value=10000.0, value=round(cur_p - 8.0, 2), step=1.0, key="snp_eth_sl")
             with c4:
-                flex_eth_lev = st.slider("Leverage (1x - 200x)", min_value=1, max_value=max_user_lev, value=min(50, max_user_lev), key="f_eth_lev")
+                snp_eth_lev = st.slider("Leverage (1x - 200x)", min_value=1, max_value=200, value=50, step=1, key="snp_eth_lev")
 
             st.markdown(f"""
-            <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:12px; border-radius:8px; margin:10px 0;">
-                <div style="font-size:11px; color:#64748b; font-weight:700;">LIVE ETH PRICE: <b>${cur_p:,.2f}</b></div>
-                <div style="font-size:12px; color:#0f172a; margin-top:4px;">Target Set: <b>${flex_eth_tp:,.2f}</b> | Stop Loss Set: <b>${flex_eth_sl:,.2f}</b> | Selected Leverage: <b>{flex_eth_lev}x</b></div>
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:12px; border-radius:10px; margin-bottom:14px;">
+                <span style="font-weight:700; color:#334155;">LIVE ETH PRICE:</span> <span style="font-family:monospace; font-weight:700; color:#0f172a;">${cur_p:,.2f}</span><br>
+                <span style="color:#64748b; font-size:12px;">Target Set: <b>${snp_eth_tp:,.2f}</b> | Stop Loss Set: <b>${snp_eth_sl:,.2f}</b> | Selected Leverage: <b>{snp_eth_lev}x</b></span>
             </div>
             """, unsafe_allow_html=True)
 
-            f_brk1 = st.selectbox("Execution Broker", ["Shark Exchange API", "Cosmic Mainnet API", "Binance Futures Feed"], key="f_eth_brk")
-            
-            col_a, col_b = st.columns(2)
-            with col_a:
-                st.toggle("Enable Live Auto-Pilot (ETH Flexible)", value=True, key="f_eth_tgl")
-            with col_b:
-                if st.button("🚀 Execute Flexible Bracket Order (ETH)", type="primary", use_container_width=True):
-                    d_mode = "LONG" if "LONG" in snp_eth_dir else "SHORT"
-                    res = execute_flexible_bracket_order("ETHUSDT", d_mode, cur_p, flex_eth_sl, flex_eth_tp, flex_eth_lev, f_brk1)
-                    st.toast(f"✅ ETH Flexible Order Placed | Lev: {flex_eth_lev}x | SL: {res['sl_price']} | TP: {res['tp_price']}", icon="🎯")
-                    st.rerun()
+            snp_eth_brk = st.selectbox("Execution Broker", ["Shark Exchange API", "Cosmic Mainnet API", "Binance Futures Feed"], key="snp_eth_brk")
+
+            if st.button("🚀 Execute Stockimyze Sniper (ETH)", type="primary", use_container_width=True):
+                res = execute_stockimyze_sniper_order("ETHUSDT", snp_eth_dir, snp_eth_tp, snp_eth_sl, snp_eth_lev, snp_eth_brk)
+                st.toast(f"✅ Stockimyze Sniper ETH Order Placed! TP: {res['tp_price']} | SL: {res['sl_price']}", icon="🎯")
+                st.rerun()
 
         else: # BTC Setup
             cur_p_btc = m_data["btc"]["raw"]
-            
-            # Flexible Inputs
+
             b1, b2, b3, b4 = st.columns(4)
             with b1:
-                snp_btc_dir = st.selectbox("Direction", ["LONG (Demand OB)", "SHORT (Supply Grab)"], key="f_btc_dir")
+                snp_btc_dir = st.selectbox("Direction", ["LONG (Demand OB)", "SHORT (Supply Grab)"], key="snp_btc_dir")
             with b2:
-                flex_btc_tp = st.number_input("Target Price (TP $)", min_value=1000.0, max_value=200000.0, value=round(cur_p_btc + 850.0, 2), step=10.0, key="f_btc_tp")
+                snp_btc_tp = st.number_input("Target Price (TP $)", min_value=1000.0, max_value=200000.0, value=round(cur_p_btc + 850.0, 2), step=10.0, key="snp_btc_tp")
             with b3:
-                flex_btc_sl = st.number_input("Stop Loss Price (SL $)", min_value=1000.0, max_value=200000.0, value=round(cur_p_btc - 220.0, 2), step=10.0, key="f_btc_sl")
+                snp_btc_sl = st.number_input("Stop Loss Price (SL $)", min_value=500.0, max_value=200000.0, value=round(cur_p_btc - 220.0, 2), step=10.0, key="snp_btc_sl")
             with b4:
-                flex_btc_lev = st.slider("Leverage (1x - 200x)", min_value=1, max_value=max_user_lev, value=min(50, max_user_lev), key="f_btc_lev")
+                snp_btc_lev = st.slider("Leverage (1x - 200x)", min_value=1, max_value=200, value=50, step=1, key="snp_btc_lev")
 
             st.markdown(f"""
-            <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:12px; border-radius:8px; margin:10px 0;">
-                <div style="font-size:11px; color:#64748b; font-weight:700;">LIVE BTC PRICE: <b>${cur_p_btc:,.2f}</b></div>
-                <div style="font-size:12px; color:#0f172a; margin-top:4px;">Target Set: <b>${flex_btc_tp:,.2f}</b> | Stop Loss Set: <b>${flex_btc_sl:,.2f}</b> | Selected Leverage: <b>{flex_btc_lev}x</b></div>
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:12px; border-radius:10px; margin-bottom:14px;">
+                <span style="font-weight:700; color:#334155;">LIVE BTC PRICE:</span> <span style="font-family:monospace; font-weight:700; color:#0f172a;">${cur_p_btc:,.2f}</span><br>
+                <span style="color:#64748b; font-size:12px;">Target Set: <b>${snp_btc_tp:,.2f}</b> | Stop Loss Set: <b>${snp_btc_sl:,.2f}</b> | Selected Leverage: <b>{snp_btc_lev}x</b></span>
             </div>
             """, unsafe_allow_html=True)
 
-            f_brk2 = st.selectbox("Execution Broker", ["Shark Exchange API", "Cosmic Mainnet API", "Binance Futures Feed"], key="f_btc_brk")
+            snp_btc_brk = st.selectbox("Execution Broker", ["Shark Exchange API", "Cosmic Mainnet API", "Binance Futures Feed"], key="snp_btc_brk")
 
-            col_c, col_d = st.columns(2)
-            with col_c:
-                st.toggle("Enable Live Auto-Pilot (BTC Flexible)", value=True, key="f_btc_tgl")
-            with col_d:
-                if st.button("🚀 Execute Flexible Bracket Order (BTC)", type="primary", use_container_width=True):
-                    d_mode_btc = "LONG" if "LONG" in snp_btc_dir else "SHORT"
-                    res_b = execute_flexible_bracket_order("BTCUSDT", d_mode_btc, cur_p_btc, flex_btc_sl, flex_btc_tp, flex_btc_lev, f_brk2)
-                    st.toast(f"✅ BTC Flexible Order Placed | Lev: {flex_btc_lev}x | SL: {res_b['sl_price']} | TP: {res_b['tp_price']}", icon="🎯")
-                    st.rerun()
+            if st.button("🚀 Execute Stockimyze Sniper (BTC)", type="primary", use_container_width=True):
+                res = execute_stockimyze_sniper_order("BTCUSDT", snp_btc_dir, snp_btc_tp, snp_btc_sl, snp_btc_lev, snp_btc_brk)
+                st.toast(f"✅ Stockimyze Sniper BTC Order Placed! TP: {res['tp_price']} | SL: {res['sl_price']}", icon="🎯")
+                st.rerun()
 
     # 2. BTC BATTLE TAB
     with strat_tabs[1]:
@@ -427,7 +415,7 @@ def render_strategies_page():
         with c2:
             btc_sl = st.number_input("Stop Loss Points (USDT)", min_value=25, max_value=1000, value=200, step=25, key="btc_sl")
         with c3:
-            btc_lev = st.slider("Strategy Leverage (1x - 200x)", min_value=1, max_value=max_user_lev, value=min(50, max_user_lev), key="btc_lev_slide")
+            btc_lev = st.slider("Strategy Leverage (1x - 200x)", min_value=1, max_value=200, value=100, key="btc_lev_slide")
         
         st.write("")
         c_act1, c_act2 = st.columns([2, 2])
@@ -450,7 +438,7 @@ def render_strategies_page():
         with e2:
             eth_sl = st.number_input("Stop Loss Points (USDT)", min_value=1, max_value=50, value=6, step=1, key="eth_sl")
         with e3:
-            eth_lev = st.slider("ETH Leverage (1x - 200x)", min_value=1, max_value=max_user_lev, value=min(25, max_user_lev), key="eth_lev_slide")
+            eth_lev = st.slider("ETH Leverage (1x - 200x)", min_value=1, max_value=200, value=100, key="eth_lev_slide")
             
         st.write("")
         e_act1, e_act2 = st.columns([2, 2])
@@ -485,14 +473,14 @@ def render_strategies_page():
         with eh2:
             st.info("HFT Engine monitoring 500ms orderbook depth.")
 
-    # 6. ACTIVE POSITIONS TABLE
+    # 6. POSITIONS
     with strat_tabs[5]:
-        st.markdown("### 📊 Active Live Positions & Flexible Brackets")
+        st.markdown("### 📊 Active Live Positions & Custom Brackets")
         positions = load_json(POSITIONS_FILE, [])
         if not positions:
             positions = [
-                {"order_id": "FLEX-301", "strategy": "Sniper Trader (Lux SMC)", "symbol": "ETHUSDT", "type": "LONG (200x)", "entry_price": "$2,592.50", "sl_price": "$2,584.50", "tp_price": "$2,635.00", "broker": "Shark Exchange", "status": "FLEX_ARMED", "pnl": "+$184.20"},
-                {"order_id": "FLEX-302", "strategy": "Sniper Trader (Lux SMC)", "symbol": "BTCUSDT", "type": "LONG (100x)", "entry_price": "$80,450.00", "sl_price": "$80,200.00", "tp_price": "$82,000.00", "broker": "Shark Exchange", "status": "FLEX_ARMED", "pnl": "+$1,420.50"}
+                {"order_id": "SNP-101", "strategy": "Stockimyze Sniper", "symbol": "ETHUSDT", "type": "LONG", "entry_price": "$2,592.50", "sl_price": "$2,584.50", "tp_price": "$2,670.41", "leverage": "50x", "broker": "Shark Exchange", "status": "BRACKET_ARMED", "pnl": "+$39.91"},
+                {"order_id": "SNP-102", "strategy": "Stockimyze Sniper", "symbol": "BTCUSDT", "type": "LONG", "entry_price": "$80,450.00", "sl_price": "$80,230.00", "tp_price": "$81,300.00", "leverage": "100x", "broker": "Shark Exchange", "status": "BRACKET_ARMED", "pnl": "+$619.99"}
             ]
         st.dataframe(pd.DataFrame(positions), use_container_width=True)
 
@@ -500,8 +488,8 @@ def render_strategies_page():
 @st.cache_data
 def get_strategy_backtest(strat_name):
     seed_map = {
-        "Sniper Trader (ETH 5M)": 42,
-        "Sniper Trader (BTC 15M)": 108,
+        "Stockimyze Sniper (ETH 5M)": 42,
+        "Stockimyze Sniper (BTC 15M)": 108,
         "BTC Battle (400 Pts Target)": 77,
         "ETH Battle (10 Pts Target)": 99,
         "BTC & ETH HFT Engines": 133
@@ -513,8 +501,8 @@ def get_strategy_backtest(strat_name):
     curve = []
     
     win_probs = {
-        "Sniper Trader (ETH 5M)": 0.73,
-        "Sniper Trader (BTC 15M)": 0.71,
+        "Stockimyze Sniper (ETH 5M)": 0.73,
+        "Stockimyze Sniper (BTC 15M)": 0.71,
         "BTC Battle (400 Pts Target)": 0.68,
         "ETH Battle (10 Pts Target)": 0.69,
         "BTC & ETH HFT Engines": 0.76
@@ -530,7 +518,7 @@ def get_strategy_backtest(strat_name):
             t_min = int(np.random.uniform(0, 59))
             t_time = c_day + timedelta(hours=t_hour, minutes=t_min)
             
-            if "Sniper" in strat_name:
+            if "Stockimyze" in strat_name:
                 asset = "ETHUSDT" if "ETH" in strat_name else "BTCUSDT"
                 setup = "LONG (OB Tap)" if np.random.random() > 0.4 else "SHORT (Supply Sweep)"
                 pnl = round(np.random.uniform(350, 580), 2) if is_win else -round(np.random.uniform(90, 140), 2)
@@ -568,8 +556,8 @@ def render_backtest_analytics_page():
     st.caption("Verified 60-day historical performance data across all trading algorithms.")
 
     all_strats = [
-        "Sniper Trader (ETH 5M)",
-        "Sniper Trader (BTC 15M)",
+        "Stockimyze Sniper (ETH 5M)",
+        "Stockimyze Sniper (BTC 15M)",
         "BTC Battle (400 Pts Target)",
         "ETH Battle (10 Pts Target)",
         "BTC & ETH HFT Engines"
@@ -610,7 +598,7 @@ def render_backtest_analytics_page():
         use_container_width=True
     )
 
-# --- PERMANENT 9 BROKERS CONNECTION PAGE ---
+# --- BROKER CONNECTIONS ---
 def render_broker_connections():
     st.markdown("<h2 style='margin-bottom:0;'>Broker Connections</h2>", unsafe_allow_html=True)
     st.caption("Connect and manage your broker accounts for live execution.")
@@ -723,7 +711,6 @@ def render_admin_users():
             "Name": v.get("name", "N/A"),
             "Role": v.get("role", "client"),
             "Status": v.get("status", "Active"),
-            "Max Leverage": f"{v.get('max_leverage', 200)}x",
             "Strategies": ", ".join(v.get("allowed_strategies", []))
         })
     st.dataframe(pd.DataFrame(table_rows), use_container_width=True)
@@ -742,12 +729,12 @@ def render_admin_users():
             with c_b:
                 new_r = st.selectbox("Role", ["client", "admin"])
                 new_s = st.selectbox("Initial Status", ["Active", "Suspended"])
-                new_l = st.number_input("Max Leverage Limit (1x - 200x)", min_value=1, max_value=200, value=200)
+                new_l = st.number_input("Max Leverage (1x - 200x)", min_value=1, max_value=200, value=200)
 
             new_strats = st.multiselect(
                 "Allowed Strategies", 
-                ["Sniper Trader (Lux SMC)", "BTC Battle", "ETH Battle", "BTCUSDT HFT", "ETHUSDT HFT"], 
-                default=["Sniper Trader (Lux SMC)", "BTC Battle", "ETH Battle"]
+                ["Stockimyze Sniper", "BTC Battle", "ETH Battle", "BTCUSDT HFT", "ETHUSDT HFT"], 
+                default=["Stockimyze Sniper", "BTC Battle", "ETH Battle"]
             )
             
             if st.form_submit_button("🚀 Create Client Account", type="primary", use_container_width=True):
@@ -766,7 +753,7 @@ def render_admin_users():
                         "brokers": {}
                     }
                     save_json(USERS_FILE, u_db)
-                    st.success(f"Client '{new_u}' created with max {new_l}x leverage!")
+                    st.success(f"Client '{new_u}' created with {new_l}x leverage!")
                     st.rerun()
 
     with t_manage:
@@ -777,7 +764,7 @@ def render_admin_users():
                 col1, col2, col3 = st.columns([2, 2, 2])
                 with col1:
                     st.write(f"**Password:** `{udata.get('password', '******')}`")
-                    st.write(f"**Max Leverage Limit:** `{udata.get('max_leverage', 200)}x`")
+                    st.write(f"**Max Leverage:** `{udata.get('max_leverage', 200)}x`")
                 with col2:
                     active_brokers_count = sum(1 for b in udata.get("brokers", {}).values() if b.get("connected"))
                     st.write(f"**Active Brokers:** `🟢 {active_brokers_count} Connected`")
@@ -799,13 +786,13 @@ def render_admin_users():
                                 st.success("Password Updated!")
                                 st.rerun()
 
-                    with st.popover("⚡ Update Max Leverage"):
+                    with st.popover("⚡ Update Leverage"):
                         cur_lev = int(udata.get("max_leverage", 200))
-                        new_lev_val = st.number_input("Max Leverage (1x - 200x)", min_value=1, max_value=200, value=cur_lev, key=f"lev_{uname}")
+                        new_lev_val = st.number_input("Leverage (1x - 200x)", min_value=1, max_value=200, value=cur_lev, key=f"lev_{uname}")
                         if st.button("Save Leverage", key=f"btn_lev_{uname}"):
                             u_db[uname]["max_leverage"] = new_lev_val
                             save_json(USERS_FILE, u_db)
-                            st.success("Leverage Limit Updated!")
+                            st.success("Leverage Updated!")
                             st.rerun()
 
                     if uname != "admin":
