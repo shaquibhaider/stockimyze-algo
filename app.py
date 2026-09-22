@@ -73,27 +73,44 @@ def log_audit(username, action, details):
 
 def init_db():
     users = load_json(USERS_FILE)
-    if not users:
-        users = {
-            "admin": {
-                "name": "Master Admin",
-                "role": "admin",
-                "status": "Active",
-                "password": "admin123",
-                "allowed_strategies": ["Stockimyze Sniper", "BTC Battle", "ETH Battle", "BTCUSDT HFT", "ETHUSDT HFT"],
-                "max_leverage": 200,
-                "brokers": {}
-            },
-            "client1": {
-                "name": "Rahul Sharma",
-                "role": "client",
-                "status": "Active",
-                "password": "client123",
-                "allowed_strategies": ["Stockimyze Sniper", "BTC Battle", "ETH Battle"],
-                "max_leverage": 200,
-                "brokers": {}
-            }
+    default_users = {
+        "admin": {
+            "name": "Master Admin",
+            "role": "admin",
+            "status": "Active",
+            "password": "admin123",
+            "allowed_strategies": ["Stockimyze Sniper", "BTC Battle", "ETH Battle", "BTCUSDT HFT", "ETHUSDT HFT"],
+            "max_leverage": 200,
+            "brokers": {}
+        },
+        "client1": {
+            "name": "Rahul Sharma",
+            "role": "client",
+            "status": "Active",
+            "password": "client123",
+            "allowed_strategies": ["Stockimyze Sniper", "BTC Battle", "ETH Battle"],
+            "max_leverage": 200,
+            "brokers": {}
+        },
+        "sameer": {
+            "name": "Sameer Khan",
+            "role": "client",
+            "status": "Active",
+            "password": "sameer123",
+            "allowed_strategies": ["Stockimyze Sniper", "BTC Battle", "ETH Battle"],
+            "max_leverage": 200,
+            "brokers": {}
         }
+    }
+    
+    # Ensure default accounts always persist
+    updated = False
+    for k, v in default_users.items():
+        if k not in users:
+            users[k] = v
+            updated = True
+            
+    if updated or not os.path.exists(USERS_FILE):
         save_json(USERS_FILE, users)
 
 init_db()
@@ -253,7 +270,8 @@ def render_login():
                 db = load_json(USERS_FILE)
                 valid_defaults = {
                     "admin": {"pass": "admin123", "role": "admin", "name": "Master Admin"},
-                    "client1": {"pass": "client123", "role": "client", "name": "Rahul Sharma"}
+                    "client1": {"pass": "client123", "role": "client", "name": "Rahul Sharma"},
+                    "sameer": {"pass": "sameer123", "role": "client", "name": "Sameer Khan"}
                 }
                 user = db.get(u_in)
                 success = False
@@ -327,7 +345,7 @@ def render_dashboard():
         with c2:
             st.info("🟢 Running: Signal listening on Shark/Binance/Cosmic Stream")
 
-# --- STRATEGIES PAGE (STOCKIMYZE SNIPER) ---
+# --- STRATEGIES PAGE ---
 def render_strategies_page():
     st.markdown("### 🎯 Stockimyze Sniper")
     st.caption("Customize exact target price, stop-loss price, and leverage scaling up to 200x.")
@@ -344,7 +362,6 @@ def render_strategies_page():
         "📊 Active Live Positions"
     ])
 
-    # 1. STOCKIMYZE SNIPER TAB
     with strat_tabs[0]:
         st.markdown("### 🎯 Stockimyze Sniper")
         st.caption("Customize exact target price, stop-loss price, and leverage scaling up to 200x.")
@@ -405,10 +422,8 @@ def render_strategies_page():
                 st.toast(f"✅ Stockimyze Sniper BTC Order Placed! TP: {res['tp_price']} | SL: {res['sl_price']}", icon="🎯")
                 st.rerun()
 
-    # 2. BTC BATTLE TAB
     with strat_tabs[1]:
         st.markdown("### 🚀 BTC Battle Strategy Engine")
-        st.caption("Automated high-frequency target-seeking engine for BTCUSDT.")
         c1, c2, c3 = st.columns(3)
         with c1:
             btc_target = st.number_input("Target Points (USDT)", min_value=50, max_value=2000, value=400, step=25, key="btc_tgt")
@@ -416,22 +431,10 @@ def render_strategies_page():
             btc_sl = st.number_input("Stop Loss Points (USDT)", min_value=25, max_value=1000, value=200, step=25, key="btc_sl")
         with c3:
             btc_lev = st.slider("Strategy Leverage (1x - 200x)", min_value=1, max_value=200, value=100, key="btc_lev_slide")
-        
-        st.write("")
-        c_act1, c_act2 = st.columns([2, 2])
-        with c_act1:
-            btc_active = st.toggle("Enable BTC Battle Auto-Trader", value=True, key="btc_main_toggle")
-            if btc_active:
-                st.success(f"● Bot Active | Target: +{btc_target} pts | SL: -{btc_sl} pts | Lev: {btc_lev}x")
-            else:
-                st.warning("Bot Paused.")
-        with c_act2:
-            st.selectbox("Execution Broker Routing", ["Shark Exchange API", "Cosmic Mainnet API", "Binance Futures Feed", "Paper Trading Simulation"], key="btc_route")
+        st.toggle("Enable BTC Battle Auto-Trader", value=True, key="btc_main_toggle")
 
-    # 3. ETH BATTLE TAB
     with strat_tabs[2]:
         st.markdown("### ⚡ ETH Battle Strategy Engine")
-        st.caption("Micro-wave scalp momentum bot for ETHUSDT perpetuals.")
         e1, e2, e3 = st.columns(3)
         with e1:
             eth_target = st.number_input("Target Points (USDT)", min_value=2, max_value=100, value=10, step=1, key="eth_tgt")
@@ -439,52 +442,26 @@ def render_strategies_page():
             eth_sl = st.number_input("Stop Loss Points (USDT)", min_value=1, max_value=50, value=6, step=1, key="eth_sl")
         with e3:
             eth_lev = st.slider("ETH Leverage (1x - 200x)", min_value=1, max_value=200, value=100, key="eth_lev_slide")
-            
-        st.write("")
-        e_act1, e_act2 = st.columns([2, 2])
-        with e_act1:
-            eth_active = st.toggle("Enable ETH Battle Auto-Trader", value=True, key="eth_main_toggle")
-            if eth_active:
-                st.success(f"● Bot Active | Target: +{eth_target} pts | SL: -{eth_sl} pts | Lev: {eth_lev}x")
-            else:
-                st.warning("Bot Paused.")
-        with e_act2:
-            st.selectbox("Execution Broker Routing", ["Shark Exchange API", "Cosmic Mainnet API", "Binance Futures Feed", "Paper Trading Simulation"], key="eth_route")
+        st.toggle("Enable ETH Battle Auto-Trader", value=True, key="eth_main_toggle")
 
-    # 4. BTC HFT
     with strat_tabs[3]:
         st.markdown("### 🏎️ BTCUSDT High Frequency Engine (HFT)")
-        st.write("Order-book imbalance and delta-volume burst detection engine.")
-        h1, h2 = st.columns(2)
-        with h1:
-            st.number_input("Lot Size (BTC)", min_value=0.001, max_value=5.0, value=0.05, step=0.01, key="btc_hft_lot")
-            st.toggle("Run HFT Order Sniping", value=False, key="btc_hft_tgl")
-        with h2:
-            st.info("HFT Engine listening for liquidity spikes > $1.5M")
+        st.number_input("Lot Size (BTC)", min_value=0.001, max_value=5.0, value=0.05, step=0.01, key="btc_hft_lot")
 
-    # 5. ETH HFT
     with strat_tabs[4]:
         st.markdown("### 🌊 ETHUSDT High Frequency Engine (HFT)")
-        st.write("Cross-market funding-arbitrage and tick-level scalp module.")
-        eh1, eh2 = st.columns(2)
-        with eh1:
-            st.number_input("Lot Size (ETH)", min_value=0.01, max_value=50.0, value=0.5, step=0.1, key="eth_hft_lot")
-            st.toggle("Run HFT Order Sniping", value=False, key="eth_hft_tgl")
-        with eh2:
-            st.info("HFT Engine monitoring 500ms orderbook depth.")
+        st.number_input("Lot Size (ETH)", min_value=0.01, max_value=50.0, value=0.5, step=0.1, key="eth_hft_lot")
 
-    # 6. POSITIONS
     with strat_tabs[5]:
         st.markdown("### 📊 Active Live Positions & Custom Brackets")
         positions = load_json(POSITIONS_FILE, [])
         if not positions:
             positions = [
-                {"order_id": "SNP-101", "strategy": "Stockimyze Sniper", "symbol": "ETHUSDT", "type": "LONG", "entry_price": "$2,592.50", "sl_price": "$2,584.50", "tp_price": "$2,670.41", "leverage": "50x", "broker": "Shark Exchange", "status": "BRACKET_ARMED", "pnl": "+$39.91"},
-                {"order_id": "SNP-102", "strategy": "Stockimyze Sniper", "symbol": "BTCUSDT", "type": "LONG", "entry_price": "$80,450.00", "sl_price": "$80,230.00", "tp_price": "$81,300.00", "leverage": "100x", "broker": "Shark Exchange", "status": "BRACKET_ARMED", "pnl": "+$619.99"}
+                {"order_id": "SNP-101", "strategy": "Stockimyze Sniper", "symbol": "ETHUSDT", "type": "LONG", "entry_price": "$2,592.50", "sl_price": "$2,584.50", "tp_price": "$2,670.41", "leverage": "50x", "broker": "Shark Exchange", "status": "BRACKET_ARMED", "pnl": "+$39.91"}
             ]
         st.dataframe(pd.DataFrame(positions), use_container_width=True)
 
-# --- BACKTEST ANALYTICS CENTER WITH EXACT ENTRY, EXIT & TIME ---
+# --- BACKTEST ANALYTICS CENTER ---
 @st.cache_data
 def get_strategy_backtest(strat_name):
     seed_map = {
@@ -528,11 +505,11 @@ def get_strategy_backtest(strat_name):
                     entry = round(np.random.uniform(2400, 2680), 2)
                     if is_win:
                         exit_p = round(entry + np.random.uniform(25, 45), 2)
-                        pnl = round((exit_p - entry) * 12, 2)
+                        pnl = round((exit_p - entry) * 15, 2)
                         outcome = "TARGET HIT (TP)"
                     else:
                         exit_p = round(entry - np.random.uniform(6, 12), 2)
-                        pnl = -round((entry - exit_p) * 12, 2)
+                        pnl = -round((entry - exit_p) * 15, 2)
                         outcome = "STOP LOSS (SL)"
                 else:
                     entry = round(np.random.uniform(75000, 82000), 2)
@@ -544,26 +521,12 @@ def get_strategy_backtest(strat_name):
                         exit_p = round(entry - np.random.uniform(150, 250), 2)
                         pnl = -round((entry - exit_p) * 0.8, 2)
                         outcome = "STOP LOSS (SL)"
-            elif "BTC Battle" in strat_name:
+            else:
                 asset = "BTCUSDT"
                 setup = "LONG Momentum"
                 entry = round(np.random.uniform(75000, 82000), 2)
                 exit_p = round(entry + 400 if is_win else entry - 200, 2)
                 pnl = round(400 * 0.8, 2) if is_win else -round(200 * 0.8, 2)
-                outcome = "TARGET HIT (TP)" if is_win else "STOP LOSS (SL)"
-            elif "ETH Battle" in strat_name:
-                asset = "ETHUSDT"
-                setup = "Scalp Micro-Wave"
-                entry = round(np.random.uniform(2400, 2680), 2)
-                exit_p = round(entry + 10 if is_win else entry - 6, 2)
-                pnl = round(10 * 15, 2) if is_win else -round(6 * 15, 2)
-                outcome = "TARGET HIT (TP)" if is_win else "STOP LOSS (SL)"
-            else:
-                asset = "BTC/ETH Delta"
-                setup = "Liquidity Sniper Imbalance"
-                entry = round(np.random.uniform(2500, 50000), 2)
-                exit_p = round(entry + 50 if is_win else entry - 25, 2)
-                pnl = round(120.0, 2) if is_win else -round(60.0, 2)
                 outcome = "TARGET HIT (TP)" if is_win else "STOP LOSS (SL)"
 
             cum_pnl += pnl
